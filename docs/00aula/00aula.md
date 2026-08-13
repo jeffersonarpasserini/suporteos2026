@@ -134,9 +134,16 @@ Esse repositório recebe:
 
 ### 2.2 Cópia de trabalho do estudante
 
-O estudante clona o repositório oficial para acompanhar a disciplina. Atividades individuais podem ser feitas em branches locais ou no fluxo definido pelo professor.
+O estudante clona o repositório oficial para acompanhar a disciplina. Atividades de leitura e experimentação podem ser feitas em branches locais ou no fluxo definido pelo professor.
 
-O estudante não deve criar outro repositório com o mesmo objetivo quando a atividade solicitar apenas o clone do projeto oficial.
+Na Aula 02, cada estudante também criará um repositório temático próprio, que será mantido durante o restante do curso. Portanto, existirão lado a lado:
+
+```text
+suporteos2026    <- referência do professor
+projeto-tematico <- trabalho individual do estudante
+```
+
+O estudante não deve modificar o remoto do projeto de referência para apontá-lo ao projeto temático, nem criar um repositório dentro do outro.
 
 ---
 
