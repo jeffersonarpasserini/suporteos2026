@@ -6,13 +6,166 @@
 
 ## Introdução
 
-A partir de agora, em nossa jornada pelo Java, vamos iniciar a utilização do framework **Spring**.
+A partir de agora, em nossa jornada pelo Java, vamos preparar o ambiente utilizado para estudar o framework **Spring**. Configurar um ambiente não significa apenas instalar programas: significa compreender qual responsabilidade cada ferramenta assume entre a escrita do código-fonte e a execução da aplicação.
 
-A seguir temos o passo a passo para a configuração de um ambiente de desenvolvimento que mantenha a compatibilidade com a programação **Java Server Pages (JSP)** e também atenda ao desenvolvimento mais moderno dentro do ambiente Java utilizando o framework **Spring**.
+Esta apostila preserva o roteiro original de configuração para **Java Server Pages (JSP)**, Tomcat, Payara e NetBeans. Esse conteúdo é útil para comparar diferentes modelos de desenvolvimento da plataforma Java e para disciplinas que ainda trabalham com Jakarta EE. Entretanto, o caminho obrigatório do projeto **Suporte OS 2026** está identificado separadamente e utiliza **Java 21, IntelliJ IDEA, Maven Wrapper e o servidor web incorporado ao Spring Boot**.
+
+> [!IMPORTANT]
+> As figuras de Java 17, NetBeans 24, Tomcat 9 e das antigas edições separadas do IntelliJ registram o ambiente em que o material original foi produzido. Elas não definem as versões do curso de 2026. Quando uma figura divergir dos quadros de decisão desta aula, prevalece o texto atualizado.
+
+## Resultados de aprendizagem
+
+Ao concluir esta aula, o estudante deverá ser capaz de:
+
+1. distinguir JDK, JRE e JVM e relacioná-los às etapas de compilação e execução;
+2. explicar as funções de IDE, ferramenta de build e servidor web;
+3. verificar qual Java está sendo usado pelo terminal, pelo Maven e pelo projeto;
+4. explicar por que `JAVA_HOME` e `PATH` podem produzir ambientes diferentes;
+5. comparar servidor incorporado, contêiner de servlets e servidor de aplicações;
+6. reconhecer o impacto da migração de `javax.*` para `jakarta.*`;
+7. justificar o uso do Maven Wrapper para builds reproduzíveis;
+8. instalar e validar o ambiente mínimo do projeto Spring Boot 2026;
+9. diagnosticar falhas de configuração a partir de evidências, e não por tentativa aleatória.
+
+## Pré-requisitos
+
+- acesso de administrador ou autorização institucional para instalar software;
+- terminal PowerShell no Windows, ou terminal equivalente no macOS/Linux;
+- conexão com a internet para os downloads e a resolução inicial de dependências;
+- repositório da disciplina preparado conforme a Aula 00;
+- aproximadamente 5 GB livres para JDK, IDE, dependências e arquivos temporários.
+
+## Decisão tecnológica do curso
+
+Nem toda ferramenta apresentada nesta apostila é obrigatória. A tabela evita instalar componentes sem saber por quê.
+
+| Componente | Suporte OS 2026 | Finalidade |
+|---|---|---|
+| Eclipse Temurin JDK 21 | Obrigatório | Compilar e executar Java 21 |
+| IntelliJ IDEA com recursos Ultimate | Obrigatório para o roteiro principal | Criar, executar, depurar e inspecionar o projeto Spring |
+| Maven Wrapper (`mvnw`) | Obrigatório | Fixar e obter a versão de Maven definida pelo projeto |
+| Maven instalado globalmente | Opcional | Uso geral fora do projeto e comparação didática |
+| Tomcat externo | Opcional, trilha JSP/Jakarta EE | Implantar manualmente aplicações empacotadas para um contêiner externo |
+| Payara externo | Opcional, trilha Jakarta EE | Executar aplicações que utilizam o perfil ou a plataforma Jakarta EE |
+| NetBeans | Opcional | IDE alternativa, especialmente para a trilha JSP/Jakarta EE |
+| Tomcat incorporado | Gerenciado pelo Spring Boot | Atender requisições HTTP quando a aplicação é executada como JAR |
+
+> [!NOTE]
+> O IntelliJ passou a usar uma distribuição unificada. Alguns recursos permanecem gratuitos e outros exigem assinatura Ultimate ou licença educacional. Neste curso, a criação do projeto pelo assistente Spring da IDE pressupõe acesso aos recursos Ultimate; a Aula 02 também ensina o caminho independente pela página Spring Initializr.
 
 ---
 
-## Aula 1 – Configuração de Ambiente
+## Fundamentos teóricos do ambiente Java
+
+### Código-fonte, bytecode e máquina virtual
+
+O arquivo `.java` é texto escrito pelo programador. O compilador `javac`, incluído no JDK, verifica regras da linguagem e produz **bytecode** em arquivos `.class`. Esse bytecode é uma representação binária destinada à Java Virtual Machine, e não diretamente a um processador específico.
+
+```mermaid
+flowchart LR
+    A["Código-fonte .java"] -->|"javac: compilação"| B["Bytecode .class"]
+    B -->|"java: carregamento e execução"| C["JVM"]
+    C --> D["Sistema operacional e processador"]
+```
+
+Essa separação sustenta a portabilidade da plataforma: diferentes implementações de JVM podem executar o mesmo formato de classe, respeitadas a versão do bytecode e as APIs disponíveis. Portabilidade não significa ausência de compatibilidade; compilar para uma versão mais nova pode impedir a execução em uma JVM mais antiga.
+
+### JDK, JRE e JVM
+
+| Conceito | Responsabilidade | Evidência prática |
+|---|---|---|
+| **JVM** | Carregar, verificar e executar bytecode; administrar áreas de memória e execução | `java` inicia uma implementação da JVM |
+| **JRE** | Ambiente necessário à execução: JVM e bibliotecas da plataforma | o programa consegue executar, mas o conceito não implica possuir compilador |
+| **JDK** | Kit de desenvolvimento: ferramentas de compilação, diagnóstico e empacotamento, além do runtime | `javac`, `jar`, `javadoc` e outras ferramentas estão disponíveis |
+
+Para desenvolver, precisamos do **JDK**. Dizer apenas “tenho Java instalado” é ambíguo: uma máquina pode reconhecer `java`, mas não `javac`, ou pode usar versões diferentes por causa do `PATH`.
+
+### Ambiente do sistema, IDE e projeto
+
+Há três seleções que podem divergir:
+
+1. **Java do terminal:** o primeiro executável encontrado no `PATH`;
+2. **Java usado pelo Maven:** exibido por `mvn -version` ou pelo Wrapper;
+3. **SDK e nível de linguagem do projeto:** configurados na IDE e no `pom.xml`.
+
+O diagnóstico precisa conferir os três. Reiniciar ou reinstalar sem identificar qual caminho foi resolvido pode ocultar o problema e não explicar sua causa.
+
+No Windows, use:
+
+```powershell
+java -version
+javac -version
+where.exe java
+where.exe javac
+$env:JAVA_HOME
+```
+
+No macOS ou Linux, use:
+
+```bash
+java -version
+javac -version
+which java
+which javac
+echo "$JAVA_HOME"
+```
+
+`JAVA_HOME` indica a raiz de um JDK para ferramentas que consultam essa variável. `PATH` é a lista ordenada de diretórios usada pelo sistema para localizar comandos. Configurar uma variável não garante que a outra esteja coerente.
+
+### IDE não é linguagem, compilador nem framework
+
+Uma **IDE** integra editor, navegação, testes, depuração, terminal e integração com Git. Ela aumenta produtividade, mas o projeto não deve depender exclusivamente dela. A aplicação precisa poder ser compilada e testada no terminal, condição importante para integração contínua e reprodutibilidade.
+
+### Build, dependências e reprodutibilidade
+
+O **build** transforma código-fonte e recursos em um artefato executável ou implantável. No Maven, o `pom.xml` descreve o projeto, suas dependências, plugins e propriedades. As dependências são identificadas por coordenadas — normalmente `groupId`, `artifactId` e `version` — e resolvidas em repositórios.
+
+O **Maven Wrapper** adiciona ao repositório scripts (`mvnw` e `mvnw.cmd`) e uma configuração da distribuição Maven. Ao usar o Wrapper, estudantes e servidores de integração executam a versão prevista pelo projeto, reduzindo a variação entre máquinas.
+
+```mermaid
+flowchart LR
+    P["pom.xml"] --> M["Maven Wrapper"]
+    M --> R["Resolve dependências"]
+    M --> C["Compila"]
+    M --> T["Executa testes"]
+    M --> J["Empacota o JAR"]
+```
+
+### Servidor web, contêiner de servlets e servidor de aplicações
+
+Os termos são relacionados, mas não equivalentes.
+
+| Modelo | O que oferece | Exemplo no material | Forma de uso |
+|---|---|---|---|
+| Servidor/contêiner web | HTTP e especificações web, como Servlet | Apache Tomcat | externo ou incorporado |
+| Servidor de aplicações Jakarta EE | Conjunto mais amplo de especificações corporativas | Payara | normalmente externo |
+| Servidor incorporado | Contêiner empacotado como dependência e iniciado pela aplicação | Tomcat no Spring Boot | `java -jar` ou execução pela IDE |
+
+No projeto do curso, não implantaremos inicialmente um WAR em um Tomcat instalado à parte. A classe principal inicia o contexto Spring e o servidor incorporado. Isso reduz a configuração externa e aproxima desenvolvimento, testes e execução, sem eliminar a necessidade de compreender HTTP, portas e ciclo de vida do servidor.
+
+### Compatibilidade `javax.*` e `jakarta.*`
+
+O Tomcat 10 marcou a adoção das especificações Jakarta EE 9 e a mudança dos pacotes da API de `javax.*` para `jakarta.*`. Portanto, o problema não é que “Tomcat 10 não aceita servlets”; ele aceita a geração atual da API Servlet. A incompatibilidade aparece quando uma aplicação antiga compilada contra `javax.servlet.*` é implantada sem migração em um ambiente que espera `jakarta.servlet.*`.
+
+Essa distinção ensina uma regra geral: **números de versão expressam contratos de compatibilidade**. Escolher “a versão mais nova” ou “a versão mais antiga” sem examinar o contrato da aplicação é uma decisão tecnicamente incompleta.
+
+### Da teoria para a prática
+
+| Ação prática | Conceito que ela verifica |
+|---|---|
+| executar `java -version` | runtime selecionado pelo terminal |
+| executar `javac -version` | presença e versão do compilador do JDK |
+| localizar executáveis com `where`/`which` | resolução do `PATH` |
+| executar `mvnw -version` | Maven e JDK efetivamente usados pelo projeto |
+| selecionar o SDK na IDE | modelo de linguagem e ferramentas de compilação do projeto |
+| iniciar a aplicação | composição entre bytecode, framework e servidor incorporado |
+| acessar uma porta HTTP | comunicação entre cliente e processo servidor |
+
+---
+
+---
+
+## Aula 1 – Configuração passo a passo
 
 ### 1.1 Instalando o Java JDK
 
@@ -25,7 +178,7 @@ java -version
 javac -version
 ```
 
-- `java -version` → retorna a versão atual instalada do Java na sua máquina. **Recomendamos a utilização da versão 17 do Java.**
+- `java -version` → retorna a versão atual selecionada no terminal. **Para o Suporte OS 2026, utilizaremos Java 21.** A Figura 1 mostra Java 17 porque pertence ao registro original da apostila.
 - `javac -version` → retorna a versão do compilador Java (`javac`).
 
 > **Figura 1 — Retorno do teste dos comandos `java -version` e `javac -version`**
@@ -43,11 +196,11 @@ O terminal mostra que está sendo executado o PowerShell 7.5.0 e os comandos for
 
 </details>
 
-Se em sua máquina estiver instalada uma versão diferente do Java, vamos removê-la e depois instalar corretamente. Siga os passos a seguir neste tutorial.
+Se a máquina estiver usando uma versão diferente, primeiro identifique os caminhos retornados por `where.exe java` e `where.exe javac`. Só remova uma instalação quando ela for obsoleta, conflitante e não for necessária a outro projeto. Diferentes JDKs podem coexistir; o objetivo é selecionar conscientemente o JDK 21 para este curso.
 
-No Windows, vá em **Configurações → Aplicativos → Aplicativos Instalados** e remova todas as instalações de Java JDK ou Java JRE existentes no seu sistema operacional (Figura 2).
+No Windows, use **Configurações → Aplicativos → Aplicativos Instalados** para consultar as distribuições existentes (Figura 2). Não remova indiscriminadamente todas as versões: laboratórios compartilhados e outros projetos podem depender delas. Se houver conflito, peça orientação ao professor ou ao responsável pelo laboratório.
 
-> ⚠️ **É recomendável reiniciar o Windows após a remoção do Java.**
+> Após instalar, remover ou alterar variáveis, feche e abra novamente o terminal. Reinicie o Windows somente se o instalador solicitar ou se o ambiente ainda não refletir a alteração.
 
 > **Figura 2 — Tela de Aplicativos Instalados no Windows**
 ![fig02](assets/fig02.png)
@@ -71,7 +224,7 @@ A interface mostra um design moderno do Windows, com cada aplicativo listado em 
 
 </details>
 
-Para garantir compatibilidade em nosso curso, vamos fazer o download da **versão 17 do Java JDK**:
+Para garantir compatibilidade com o projeto de 2026, vamos fazer o download da **versão 21 LTS do Java JDK**:
 
 🔗 **Download Java JDK** – [Home | Adoptium](https://adoptium.net/)
 
@@ -101,9 +254,9 @@ Com a página aberta, localize o botão **"Other platforms and versions"** e cli
 | **Operating System** | Windows |
 | **Architecture** | x64 |
 | **Package Type** | JDK |
-| **Version** | 17 – LTS |
+| **Version** | 21 – LTS |
 
-O site irá fornecer dois botões para download (à direita da página): a versão **MSI**, que deve ser baixada, e a versão **ZIP**.
+O site oferece, entre outros formatos, **MSI** e **ZIP**. Para o laboratório Windows, prefira o MSI porque ele orienta a integração com o sistema; o ZIP é válido para instalações portáveis ou sem alteração global, desde que o caminho seja configurado corretamente.
 
 > **Figura 4 — Configuração do download no site do Temurin JDK**
 
@@ -170,7 +323,7 @@ A interface apresenta o logotipo do Temurin no canto superior direito e botões 
 
 </details>
 
-Nesta tela devemos deixar a opção padrão **"Install for all users of this machine"** e clicar em **Next**.
+Em um computador pessoal com acesso administrativo, a opção **"Install for all users of this machine"** facilita o uso por todas as contas. Em laboratório ou máquina sem privilégio administrativo, a instalação apenas para o usuário atual também é válida e deve seguir a política institucional.
 
 > **Figura 8 — Temurin JDK – Installer – Tela 04**
 
@@ -219,6 +372,9 @@ javac -version
 
 ### 1.2 Instalando o Apache Tomcat
 
+> [!NOTE]
+> **Trilha opcional JSP/Jakarta EE.** O projeto Spring Boot 2026 usa o Tomcat incorporado e não exige esta instalação externa. Execute esta seção apenas se a disciplina também trabalhar com implantação manual de aplicações JSP/Servlet.
+
 Agora precisamos fazer o download do servidor de aplicação web **Apache Tomcat**.
 
 Para garantir compatibilidade em nosso curso, vamos fazer o download da **versão 9 do Apache Tomcat**, sendo o release atual o **9.0.102**.
@@ -229,11 +385,15 @@ O link irá baixar o arquivo de instalação referente ao instalador **32-bit/64
 
 Feito o download do Apache Tomcat 9, descompacte-o na sua pasta de downloads. Provavelmente o Windows irá colocar uma pasta Tomcat dentro da outra; então abra a primeira pasta e, dentro dela, vamos encontrar a pasta **`apache-tomcat-9.0.102`** → copie esta pasta e cole na raiz do seu drive `C:\`.
 
-> ⚠️ **Atenção:** nunca instale o Tomcat 10 ou superior quando for desenvolver com servlets, pois existem incompatibilidades.
+> [!WARNING]
+> Escolha a versão do Tomcat de acordo com o namespace usado pela aplicação. Aplicações antigas baseadas em `javax.servlet.*` são compatíveis com Tomcat 9; Tomcat 10 ou superior trabalha com `jakarta.servlet.*`. Servlets continuam existindo nas versões atuais — o que exige atenção é a migração do contrato de API.
 
 ---
 
 ### 1.3 Instalando o Apache NetBeans
+
+> [!NOTE]
+> **IDE opcional e telas históricas.** O roteiro principal do Spring Boot 2026 utiliza IntelliJ IDEA. O NetBeans 24 documentado abaixo pode ser estudado como alternativa e como suporte à trilha JSP/Jakarta EE; consulte a página oficial para a versão estável atual.
 
 Para iniciar no mundo Java, vamos instalar nossa ferramenta de desenvolvimento: o **Apache NetBeans**. O Apache NetBeans é um software desenvolvido pela comunidade open source, de onde recebe muitas contribuições que são gerenciadas pela Fundação Apache. A Apache recebeu originalmente o código-fonte do NetBeans em sua versão 8 da Oracle, quando esta decidiu descontinuar o produto em 2016.
 
@@ -448,15 +608,15 @@ Nesta opção também **não faremos alterações**.
   - ⬜ *Use Configuration Cache*
   - ✅ *Skip 'check' for non-test Related Executions*
   - ⬜ *Skip 'test' for non-test Related Executions*
-- **Java Runtime:** JDK 17 (Default) — alterável em **Manage Runtimes…**
+- **Java Runtime:** JDK 17 (Default) na captura histórica — alterável em **Manage Runtimes…**; selecione JDK 21 para o curso 2026
 - **Allow Gradle Execution:** *Trusted Projects Only*
 - **Network Proxy:** *Ask Before Execution*
 
 ###### Java → Java Shell
 
-Nesta opção, só confirme se em **Java Platform** está selecionado **JDK 17 (Default)**, que foi o JDK que instalamos.
+Nesta opção, confirme se em **Java Platform** está selecionado o JDK previsto para o seu projeto. A captura mostra **JDK 17 (Default)**; no curso 2026, selecione **JDK 21**.
 
-- **Java Platform:** *JDK 17 (Default)* — botão **Manage…** para gerenciar versões do JDK
+- **Java Platform:** *JDK 17 (Default)* na captura histórica — botão **Manage…** para selecionar JDK 21 e gerenciar versões
 - **Opções de console:**
   - ⬜ *Auto open JavaShell console*
   - ✅ *Reuse dead consoles*
@@ -469,7 +629,7 @@ Nesta opção **não faremos alterações**.
 - **Painel lateral:** Execution *(selecionado)*, Index, Appearance, Dependencies
 - **Maven Home:** *Bundled* (Maven incluído com o NetBeans) — versão **3.9.9**
   - ✅ *Prefer Maven Wrapper that comes with project*
-- **Default JDK:** JDK 17 (Default) — botão **Manage Java Platforms**
+- **Default JDK:** JDK 17 (Default) na captura histórica — botão **Manage Java Platforms**; use JDK 21 em 2026
 - **Global Execution Options:** `-no-transfer-progress` (reduz a saída de logs) — botão **Add**
 - **Network Proxy:** *Ask Before Execution*
 - **Opções adicionais:**
@@ -553,9 +713,9 @@ Nesta opção **não faremos alterações**.
 
 ###### Java → JS on JVM
 
-Nesta opção **não faremos alterações** — apenas confirme se em **Java Platform** está selecionado **JDK 17 (Default)**.
+Nesta opção, confirme se **Java Platform** aponta para o JDK do projeto. A figura preservada mostra **JDK 17 (Default)**; selecione **JDK 21** para a turma 2026.
 
-- **Java Platform:** *JDK 17 (Default)* — botão **Manage Platforms…**
+- **Java Platform:** *JDK 17 (Default)* na figura — botão **Manage Platforms…** para selecionar JDK 21
 - **Engine:** *Graal.js* (motor de JavaScript baseado na JVM) — requer Java 8 ou superior
 - **Engine Options:** campo vazio para parâmetros personalizados
 - **Arguments:** campo vazio para argumentos personalizados
@@ -841,13 +1001,13 @@ Na tela *Add Server Instance*, escolha na caixa **Choose Server** a opção **"A
 **Como configurar:**
 
 1. Indique no campo **"Server Location"** o caminho correto do servidor Tomcat — o mesmo onde copiamos a instalação do Tomcat no drive `C:`. Se você baixou o último release, a pasta será **`apache-tomcat-9.0.102`**. Clique em **Browse**, navegue até o drive `C:` e escolha essa pasta.
-2. Configure os campos **"Username"** e **"Password"**. Gere um usuário e uma senha para o seu servidor Tomcat — **recomendo `admin` e `admin`**. Quando utilizarmos esse servidor, o NetBeans pedirá esse usuário e senha.
+2. Configure os campos **"Username"** e **"Password"** com uma credencial exclusiva para o laboratório. Use uma senha forte, não reutilize senha pessoal e não publique a credencial no Git. Quando utilizarmos esse servidor, o NetBeans pedirá esse usuário e senha.
 
 Após a configuração, a tela ficará assim:
 
 - *Server Location:* `C:\apache-tomcat-9.0.91`
 - ⬜ *Use Private Configuration Folder (Catalina Base)*
-- *Username:* `admin`
+- *Username:* `aluno_manager` (exemplo; escolha outro identificador)
 - *Password:* `•••••`
 - ✅ *Create user if it does not exist*
 - Botão **Finish** habilitado
@@ -862,7 +1022,7 @@ Agora resta clicar no botão **"Finish"** no rodapé da tela.
   - *Server Type:* Apache Tomcat or TomEE
   - *Catalina Home:* `C:\apache-tomcat-9.0.91`
   - *Catalina Base:* `C:\apache-tomcat-9.0.91`
-  - Credenciais de um usuário com permissão `manager-script` — *Username:* `admin`; *Password:* oculto, com botão **Show**
+  - Credenciais de um usuário com permissão `manager-script` — use um identificador exclusivo; a senha permanece oculta
   - *Server Port:* `8080` (requisições HTTP)
   - *Shutdown Port:* `8005` (desligamento do servidor)
   - ⬜ *Enable HTTP Monitor*
@@ -876,6 +1036,9 @@ A partir do tópico 1.4 vamos iniciar a configuração para as aulas de desenvol
 ---
 
 ### 1.4 Instalando o Maven
+
+> [!IMPORTANT]
+> Para o projeto Spring Boot 2026, a instalação global descrita nesta seção é **opcional**. O procedimento oficial é executar `mvnw.cmd` no Windows ou `./mvnw` no macOS/Linux. A instalação global foi preservada para compreender `PATH`, comparar ambientes e atender projetos que não forneçam Wrapper.
 
 **Maven – Gerenciador de Build e Dependências para Projetos Java**
 
@@ -934,7 +1097,7 @@ Ao usar Maven com Spring Boot, basta adicionar as dependências no `pom.xml` par
 #### Vantagens do Maven no desenvolvimento com Spring
 
 - **Produtividade:** reduz o tempo gasto com configuração manual
-- **Portabilidade:** qualquer desenvolvedor com Maven instalado pode compilar e executar o projeto
+- **Portabilidade:** qualquer ambiente com Java compatível pode usar o Maven Wrapper e executar a versão de Maven prevista pelo projeto
 - **Gerenciamento de versões:** fácil atualização ou troca de bibliotecas
 - **Integração contínua:** compatível com ferramentas como Jenkins, GitHub Actions e GitLab CI/CD
 
@@ -1048,9 +1211,9 @@ Uma seta rosa aponta da pasta do Maven, na janela da esquerda, para o Disco Loca
 
 </details>
 
-#### Criando a variável de ambiente `M2_HOME`
+#### Criando a variável de ambiente `M2_HOME` em uma instalação global
 
-Agora precisamos criar a variável de ambiente para que o Maven possa ser encontrado no seu Windows.
+Este é um procedimento tradicional para organizar uma instalação global. O Maven atual precisa que o executável de sua pasta `bin` esteja no `PATH`; `M2_HOME` não é requisito do Maven Wrapper e pode ser dispensado quando o caminho absoluto da pasta `bin` é adicionado diretamente ao `PATH`.
 
 > ⚠️ **Atenção!** É importante que utilize o caminho que está no **seu** computador — o que consta das imagens é meramente ilustrativo.
 
@@ -1201,16 +1364,16 @@ O **IntelliJ IDEA** é uma IDE (*Integrated Development Environment*) desenvolvi
 - Criação e execução de endpoints REST diretamente na IDE
 - *Hot Reload* com Spring DevTools integrado
 
-#### Edições disponíveis
+#### Distribuição unificada e recursos Ultimate
 
-| Edição | Descrição |
+As telas originais abaixo exibem downloads separados para **Community** e **Ultimate**. Nas versões atuais, o IntelliJ IDEA é distribuído por um instalador unificado: existe um núcleo gratuito e um conjunto de recursos Ultimate sujeito a assinatura, avaliação ou licença educacional.
+
+| Modalidade de uso | Recursos relevantes para o curso |
 |---|---|
-| **Community Edition** (gratuita) | Voltada principalmente para desenvolvimento em Java, Kotlin e Scala, com suporte a Maven, Gradle e Git |
-| **Ultimate Edition** (paga) | Inclui recursos avançados para desenvolvimento web, Spring, bancos de dados e integração corporativa |
+| Gratuita | Java, Maven, Git, execução e edição fundamentais; o projeto pode ser baixado do Spring Initializr e aberto na IDE |
+| Ultimate/licença educacional | Assistente Spring Boot dentro da IDE, suporte avançado ao Spring, HTTP, banco de dados e outras integrações |
 
-> 💡 Neste material vamos demonstrar o passo a passo da instalação da versão **Community Edition** (gratuita). Se você possuir um e-mail institucional de sua faculdade, faça sua inscrição no site da JetBrains e baixe a versão **Ultimate**.
->
-> A versão Ultimate facilita principalmente no momento da criação do projeto Spring, pois não é preciso acessar o gerador de projeto externo à IDE.
+> Para acompanhar o caminho principal da Aula 02, solicite antecipadamente a licença educacional e confirme que os recursos Ultimate estão ativos. O caminho pelo site Spring Initializr permanece documentado porque expressa a mesma configuração do projeto e não depende da IDE.
 
 🔗 **Site:** <https://www.jetbrains.com/pt-br/>
 
@@ -1279,7 +1442,7 @@ Na parte inferior, um retângulo roxo escuro apresenta: *"IntelliJ IDEA goes AI 
 
 🔗 **Página de download:** <https://www.jetbrains.com/pt-br/idea/download/?section=windows>
 
-Nesta página temos acesso ao download para as versões **Ultimate** e **Community**. Novamente: se você tiver algum e-mail institucional de sua faculdade, baixe a versão Ultimate; senão, opte pela versão Community.
+Baixe o instalador atual para o seu sistema operacional. A imagem seguinte registra a página antiga, quando os downloads **Ultimate** e **Community** apareciam separados; use-a apenas para reconhecer o produto, não para inferir a organização atual das licenças.
 
 > **Imagem — Página de download do IntelliJ IDEA**
 
@@ -1412,3 +1575,233 @@ Barra de busca *"Search projects"* para localizar projetos recentes, seguida da 
 - **Clone Repository** — clonar um repositório a partir de um serviço Git
 
 Essa tela é o ponto de partida para iniciar novos trabalhos, reabrir projetos existentes ou configurar o ambiente de desenvolvimento no IntelliJ IDEA.
+
+---
+
+## Verificação obrigatória do ambiente Spring Boot 2026
+
+O ambiente só pode ser considerado pronto quando produz evidências observáveis. Execute os comandos na raiz do projeto de referência.
+
+### Windows PowerShell
+
+```powershell
+java -version
+javac -version
+where.exe java
+$env:JAVA_HOME
+git --version
+.\mvnw.cmd -version
+.\mvnw.cmd test
+```
+
+### macOS ou Linux
+
+```bash
+java -version
+javac -version
+which java
+echo "$JAVA_HOME"
+git --version
+./mvnw -version
+./mvnw test
+```
+
+Analise a saída:
+
+- `java` e `javac` devem indicar Java 21;
+- o caminho deve pertencer ao JDK escolhido, e não a uma instalação inesperada;
+- o Maven Wrapper deve informar o Java 21 usado por ele;
+- os testes devem terminar sem falhas;
+- uma advertência deve ser interpretada, mas não confundida automaticamente com erro;
+- uma falha de download na primeira execução pode indicar rede, proxy ou certificado, e não defeito no código.
+
+> [!TIP]
+> Guarde a saída desses comandos no relatório da atividade. Em Engenharia de Software, uma afirmação como “funciona na minha máquina” só se torna útil quando acompanhada de versão, comando e resultado reproduzível.
+
+## Diagnóstico orientado por evidências
+
+### `java` funciona, mas `javac` não
+
+Hipótese provável: o `PATH` aponta apenas para um runtime ou para uma instalação incompleta. Localize ambos os executáveis e confirme que o JDK está instalado.
+
+### Terminal e IntelliJ mostram versões diferentes
+
+O terminal resolve o `PATH`; a IDE pode usar um SDK escolhido nas configurações do projeto. Confira os dois ambientes e alinhe-os ao Java 21. Não conclua que a IDE “ignora” o Java sem verificar sua configuração.
+
+### `UnsupportedClassVersionError`
+
+O bytecode foi compilado para uma versão de Java mais nova que a JVM utilizada na execução. Identifique:
+
+1. a versão configurada no `pom.xml`;
+2. a versão usada para compilar;
+3. a versão usada para executar.
+
+### Porta 8080 ocupada
+
+Uma porta identifica um ponto de comunicação de um processo no sistema operacional. Se outro processo já escuta na porta 8080, a nova aplicação não pode assumir o mesmo endereço. Descubra o processo ou configure outra porta; não encerre processos desconhecidos sem autorização.
+
+### Dependência não é baixada
+
+O Maven pode precisar acessar repositórios remotos. Verifique conexão, proxy institucional, certificado e a mensagem original. Apagar todo o repositório local sem diagnóstico é uma ação ampla e geralmente desnecessária.
+
+## Atividade prática orientada
+
+### Parte A — mapa conceitual do ambiente
+
+Construa um diagrama que contenha pelo menos estes elementos:
+
+- código-fonte `.java`;
+- compilador `javac`;
+- bytecode `.class`;
+- JVM;
+- IDE;
+- `pom.xml`;
+- Maven Wrapper;
+- dependências;
+- servidor incorporado;
+- cliente HTTP.
+
+Cada seta deve ser nomeada com uma relação, como “compila”, “executa”, “declara” ou “envia requisição”. Uma lista de ferramentas sem relações não caracteriza um modelo conceitual.
+
+### Parte B — inventário reproduzível
+
+Registre em Markdown:
+
+| Item | Comando ou tela | Resultado encontrado | Resultado esperado | Situação |
+|---|---|---|---|---|
+| Java runtime | `java -version` | preencher | 21 | preencher |
+| Compilador | `javac -version` | preencher | 21 | preencher |
+| Caminho do Java | `where`/`which` | preencher | JDK escolhido | preencher |
+| Git | `git --version` | preencher | comando reconhecido | preencher |
+| Maven do projeto | Wrapper `-version` | preencher | comando reconhecido e Java 21 | preencher |
+| Testes | Wrapper `test` | preencher | build sem falhas | preencher |
+
+### Parte C — experimento de compilação
+
+Crie uma pasta temporária fora do repositório, salve o arquivo a seguir como `Ambiente.java` e não o adicione ao projeto Spring:
+
+```java
+public class Ambiente {
+    public static void main(String[] args) {
+        System.out.println("JDK: " + System.getProperty("java.version"));
+        System.out.println("JVM: " + System.getProperty("java.vm.name"));
+        System.out.println("SO: " + System.getProperty("os.name"));
+    }
+}
+```
+
+Compile e execute:
+
+```bash
+javac Ambiente.java
+java Ambiente
+```
+
+Explique a função dos três artefatos observados: `Ambiente.java`, `Ambiente.class` e o processo `java`. Depois apague apenas a pasta temporária criada por você.
+
+### Parte D — comparação de arquiteturas
+
+Produza um texto de 150 a 250 palavras respondendo:
+
+> Qual é a diferença operacional entre implantar um WAR em um Tomcat externo e executar um JAR Spring Boot com servidor incorporado? Que configuração pertence à aplicação e que configuração pertence ao ambiente?
+
+## Questões de revisão
+
+1. Por que `java -version` e `javac -version` respondem a perguntas diferentes?
+2. Qual é a relação entre arquivo `.class` e JVM?
+3. O JDK é necessário apenas para executar uma aplicação já compilada? Justifique conceitualmente.
+4. Como `PATH` participa da escolha de um executável?
+5. Qual é a finalidade de `JAVA_HOME`?
+6. Por que terminal, Maven e IDE podem usar JDKs diferentes?
+7. O que uma IDE acrescenta ao processo de desenvolvimento?
+8. Por que o projeto não deve depender exclusivamente de ações gráficas da IDE?
+9. O que é um build?
+10. Que informações fundamentais o `pom.xml` descreve?
+11. Qual problema de reprodutibilidade o Maven Wrapper reduz?
+12. O Wrapper elimina a necessidade de um JDK? Explique.
+13. Qual é a diferença entre servidor incorporado e servidor instalado externamente?
+14. Tomcat e Payara fornecem exatamente o mesmo conjunto de serviços? Explique.
+15. O que mudou de `javax.servlet.*` para `jakarta.servlet.*`?
+16. Por que a frase “Tomcat 10 não suporta servlets” está incorreta?
+17. Por que `admin/admin` é inadequado mesmo em uma apostila?
+18. Qual evidência demonstra que o ambiente está pronto para o projeto?
+19. Como você investigaria um `UnsupportedClassVersionError`?
+20. Por que registrar versões e saídas de comandos faz parte da Engenharia de Software?
+
+## Avaliação da aprendizagem
+
+| Critério | Insuficiente | Em desenvolvimento | Adequado | Avançado |
+|---|---|---|---|---|
+| Modelo Java | confunde JDK, JRE e JVM | reconhece termos sem relacioná-los | explica compilação e execução corretamente | relaciona portabilidade e compatibilidade de bytecode |
+| Ferramentas | apenas lista programas | descreve funções parcialmente | distingue IDE, build e servidor | compara alternativas e seus efeitos arquiteturais |
+| Configuração | depende de tentativa e erro | executa comandos sem interpretar | coleta e interpreta versões e caminhos | formula e testa hipóteses de diagnóstico |
+| Reprodutibilidade | não registra o ambiente | registra dados incompletos | usa Wrapper e apresenta evidências | explica impacto em equipe e integração contínua |
+| Segurança | usa credenciais triviais ou as publica | reconhece o risco após orientação | usa credencial local exclusiva e não a versiona | justifica mínimo privilégio e separação de ambientes |
+
+Sugestão de composição da nota da atividade:
+
+- mapa conceitual: 25%;
+- inventário e evidências: 25%;
+- experimento de compilação: 20%;
+- comparação arquitetural: 20%;
+- clareza, fontes e segurança: 10%.
+
+## Checklist do estudante
+
+- [ ] Consigo diferenciar JDK, JRE e JVM.
+- [ ] Java 21 está selecionado no terminal.
+- [ ] Sei localizar o executável resolvido pelo `PATH`.
+- [ ] O SDK do projeto no IntelliJ é Java 21.
+- [ ] Consigo explicar a função do `pom.xml`.
+- [ ] O Maven Wrapper executa com Java 21.
+- [ ] Os testes do projeto são executados pelo terminal.
+- [ ] Sei por que o projeto Spring não exige Tomcat externo.
+- [ ] Reconheço a diferença entre `javax.*` e `jakarta.*`.
+- [ ] Não usei nem registrei credenciais triviais.
+- [ ] Registrei as evidências da configuração.
+
+## Ponto de quebra da aula
+
+Esta aula configura a máquina e não deve adicionar binários, instaladores, preferências pessoais da IDE ou credenciais ao repositório. Se houver apenas documentação oficial da aula, o ponto de quebra sugerido é:
+
+```bash
+git status
+git diff
+git add docs/01aula/01aula.md
+git commit -m "Aula 01: documenta e valida o ambiente Java"
+git tag -a aula-01-ambiente -m "Conclusão da Aula 01"
+```
+
+Antes do commit, confirme que `.idea/`, arquivos de log, instaladores e segredos não aparecem no `git status`.
+
+## Orientações para o professor
+
+| Etapa | Tempo sugerido |
+|---|---:|
+| Modelo JDK–bytecode–JVM | 25 minutos |
+| IDE, Maven e servidores | 30 minutos |
+| Instalação acompanhada | 45 minutos |
+| Inventário e diagnóstico em pares | 35 minutos |
+| Experimento de compilação | 20 minutos |
+| Discussão e fechamento | 20 minutos |
+
+Use as seções de Tomcat externo, Payara e NetBeans como trilha comparativa ou material complementar. Para a turma de Spring Boot 2026, concentre o encontro presencial em Java 21, IntelliJ, Maven Wrapper, interpretação de mensagens e validação do ambiente.
+
+Uma estratégia de aprendizagem ativa é distribuir falhas controladas entre grupos — por exemplo, SDK incorreto na IDE, `PATH` antigo ou porta ocupada — e pedir que cada grupo apresente a evidência, a hipótese e o teste realizado. Evite avaliar apenas a conclusão “funcionou”: avalie o raciocínio diagnóstico.
+
+## Referências oficiais
+
+- [Java Virtual Machine Specification — estrutura da JVM](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-2.html)
+- [Eclipse Temurin — downloads do OpenJDK](https://adoptium.net/temurin/releases/)
+- [Apache Maven — introdução ao ciclo de vida](https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html)
+- [Apache Maven Wrapper](https://maven.apache.org/tools/wrapper/)
+- [Apache Tomcat 10 — guia de migração](https://tomcat.apache.org/migration-10)
+- [Spring Boot — servidores web incorporados](https://docs.spring.io/spring-boot/how-to/webserver.html)
+- [Jakarta EE Web Profile](https://jakarta.ee/specifications/webprofile/)
+- [Apache NetBeans — versões disponíveis](https://netbeans.apache.org/front/main/download/)
+- [IntelliJ IDEA — download e modalidades de uso](https://www.jetbrains.com/idea/download/)
+- [JetBrains — licença educacional](https://www.jetbrains.com/community/education/#students)
+
+---
+
+[⬅ Voltar para o índice do curso](../../README.md)

@@ -55,6 +55,639 @@ Ao concluir a aula, o estudante deverá ser capaz de:
 8. Criar um endpoint HTTP mínimo.
 9. Planejar um domínio compatível com as próximas aulas.
 10. Versionar o projeto sem incluir arquivos locais da IDE.
+11. Explicar o que é uma API e seu papel em uma aplicação distribuída.
+12. Identificar os componentes de uma requisição e de uma resposta HTTP.
+13. Relacionar recursos, URIs, métodos e códigos de status.
+14. Diferenciar API, REST, HTTP e JSON.
+15. Descrever o caminho percorrido por uma requisição dentro do Spring Boot.
+
+---
+
+## Fundamentos teóricos — aplicações API
+
+Antes de criar o projeto, precisamos compreender o tipo de aplicação que construiremos.
+
+O `suporteos2026` será uma **API Web**. Sua responsabilidade principal não será desenhar páginas HTML. Ela receberá requisições, executará regras do sistema e devolverá respostas estruturadas para outros programas.
+
+### O que é uma aplicação?
+
+Uma aplicação é um conjunto de componentes de software criado para atender necessidades de usuários ou de outros sistemas.
+
+Uma aplicação pode executar inteiramente em um computador ou ser distribuída entre vários processos e equipamentos.
+
+Exemplo de aplicação local:
+
+```text
+Calculadora executando no computador
+```
+
+Exemplo de aplicação distribuída:
+
+```text
+Aplicativo móvel -> API -> banco de dados
+```
+
+Quando os componentes estão separados, eles precisam de uma forma definida de comunicação. É nesse ponto que utilizamos uma API.
+
+### O que significa API?
+
+API é a sigla de **Application Programming Interface**, ou **Interface de Programação de Aplicações**.
+
+Uma interface estabelece como um componente pode solicitar serviços de outro componente sem precisar conhecer toda a sua implementação interna.
+
+Pense em uma API como um contrato que informa:
+
+- quais operações estão disponíveis;
+- como solicitar cada operação;
+- quais dados podem ser enviados;
+- quais dados serão devolvidos;
+- quais erros podem ocorrer;
+- como interpretar cada resposta.
+
+O cliente de uma API não precisa saber:
+
+- como os objetos Java foram implementados;
+- qual consulta SQL foi executada;
+- em qual classe está a regra de negócio;
+- como os dados estão fisicamente armazenados.
+
+Ele precisa conhecer o contrato público.
+
+### Nem toda API é uma API Web
+
+O termo API é mais amplo do que HTTP.
+
+Exemplos:
+
+| Tipo | Exemplo |
+|---|---|
+| API de biblioteca | Métodos de `java.util.List` |
+| API do sistema operacional | Operações para arquivos e processos |
+| API de framework | Anotações e classes do Spring |
+| API Web | Operações acessadas por HTTP através da rede |
+
+Neste curso, quando usarmos apenas a palavra **API**, normalmente estaremos nos referindo à API Web criada com Spring Boot.
+
+### API Web e aplicação Web com páginas
+
+Uma aplicação web tradicional pode gerar HTML no servidor e enviá-lo pronto ao navegador.
+
+```mermaid
+flowchart LR
+    A["Navegador"] -->|"GET /produtos"| B["Servidor web"]
+    B -->|"HTML pronto"| A
+```
+
+Uma API Web normalmente devolve dados para que outro componente decida como apresentá-los.
+
+```mermaid
+flowchart LR
+    A["Aplicativo, navegador ou outro sistema"] -->|"GET /api/produtos"| B["API Spring Boot"]
+    B -->|"JSON"| A
+```
+
+A mesma API pode atender clientes diferentes:
+
+```mermaid
+flowchart LR
+    W["Aplicação Web"] --> API["API suporteos2026"]
+    M["Aplicativo móvel"] --> API
+    D["Painel administrativo"] --> API
+    O["Outro sistema"] --> API
+```
+
+Essa separação permite que interface e servidor evoluam como partes diferentes, desde que respeitem o contrato combinado.
+
+### Arquitetura cliente-servidor
+
+No modelo cliente-servidor:
+
+- o **cliente** inicia uma comunicação;
+- o **servidor** aguarda solicitações;
+- o cliente envia uma requisição;
+- o servidor processa e envia uma resposta.
+
+```mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant S as API Spring Boot
+    C->>S: Requisição HTTP
+    S->>S: Processa a solicitação
+    S-->>C: Resposta HTTP
+```
+
+Os termos cliente e servidor descrevem papéis naquela comunicação. Um sistema pode ser servidor em uma interação e cliente em outra.
+
+No curso, podem atuar como clientes:
+
+- navegador;
+- `curl`;
+- PowerShell;
+- IntelliJ HTTP Client;
+- Postman ou Insomnia;
+- uma futura interface web;
+- testes automatizados;
+- outra aplicação.
+
+O projeto Spring Boot atuará como servidor HTTP.
+
+### O protocolo HTTP
+
+HTTP significa **Hypertext Transfer Protocol**. É um protocolo de aplicação baseado em mensagens de requisição e resposta.
+
+O cliente comunica uma intenção. O servidor interpreta essa intenção em relação a um recurso e devolve um resultado.
+
+Uma mensagem HTTP não é apenas “um texto enviado pela internet”. Ela possui elementos com significados definidos.
+
+### Anatomia de uma requisição HTTP
+
+Exemplo conceitual:
+
+```http
+GET /api/produtos/10 HTTP/1.1
+Host: localhost:8080
+Accept: application/json
+```
+
+Elementos:
+
+| Elemento | Exemplo | Finalidade |
+|---|---|---|
+| Método | `GET` | Expressa a intenção da operação |
+| Alvo/URI | `/api/produtos/10` | Identifica o recurso desejado |
+| Versão | `HTTP/1.1` | Indica a versão da mensagem |
+| Header | `Accept: application/json` | Envia metadados e preferências |
+| Body | Pode não existir | Transporta dados quando necessário |
+
+Uma criação poderá ter corpo:
+
+```http
+POST /api/produtos HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigoBarra": "7890000000001",
+  "descricao": "Caderno",
+  "saldoEstoque": 10,
+  "valorUnitario": 18.00,
+  "grupoProdutoId": 1,
+  "status": 1
+}
+```
+
+### Anatomia de uma resposta HTTP
+
+Exemplo conceitual:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 82
+
+{
+  "id": 10,
+  "codigoBarra": "7890000000001",
+  "descricao": "Caderno"
+}
+```
+
+Elementos:
+
+| Elemento | Exemplo | Finalidade |
+|---|---|---|
+| Versão | `HTTP/1.1` | Versão usada na mensagem |
+| Status | `200` | Resultado padronizado da requisição |
+| Reason phrase | `OK` | Descrição legível do status |
+| Headers | `Content-Type` | Metadados da resposta |
+| Body | JSON do produto | Representação devolvida ao cliente |
+
+### Recurso, URI e endpoint
+
+Um **recurso** é algo do domínio que pode ser identificado e manipulado por meio da API.
+
+No projeto de referência:
+
+- coleção de produtos;
+- um produto específico;
+- coleção de grupos;
+- um grupo específico.
+
+Exemplos de URIs:
+
+```text
+/api/produtos
+/api/produtos/10
+/api/grupos-produtos
+/api/grupos-produtos/3
+```
+
+Um **endpoint** é uma operação exposta pela API, normalmente caracterizada pela combinação do método HTTP com o caminho.
+
+Portanto, estes são endpoints diferentes:
+
+```text
+GET  /api/produtos
+POST /api/produtos
+```
+
+O caminho é igual, mas a intenção definida pelo método é diferente.
+
+### Métodos HTTP que utilizaremos
+
+| Método | Intenção no curso | Exemplo |
+|---|---|---|
+| `GET` | Consultar recursos | Buscar produtos |
+| `POST` | Criar um novo recurso | Cadastrar produto |
+| `PUT` | Substituir/atualizar o estado definido do recurso | Atualizar produto |
+| `DELETE` | Remover um recurso | Excluir produto |
+
+Mapeamento inicial do CRUD:
+
+| CRUD | Método HTTP | URI |
+|---|---|---|
+| Create | `POST` | `/api/produtos` |
+| Read | `GET` | `/api/produtos` ou `/api/produtos/{id}` |
+| Update | `PUT` | `/api/produtos/{id}` |
+| Delete | `DELETE` | `/api/produtos/{id}` |
+
+CRUD é uma forma de organizar operações de dados. HTTP define semântica de comunicação. Os conceitos se relacionam, mas não são sinônimos.
+
+### Segurança e idempotência dos métodos
+
+Em HTTP, um método é considerado **seguro** quando sua intenção é apenas leitura, sem solicitar mudança do estado do recurso. `GET` é o principal exemplo usado no curso.
+
+Um método é **idempotente** quando repetir a mesma requisição produz o mesmo efeito pretendido no servidor que executá-la uma vez.
+
+Exemplos conceituais:
+
+- repetir `GET /api/produtos/10` continua sendo uma consulta;
+- repetir o mesmo `PUT /api/produtos/10` deve conduzir ao mesmo estado pretendido;
+- repetir `DELETE /api/produtos/10` não deve criar novas exclusões;
+- repetir um `POST` de criação pode tentar criar mais de um recurso e, por isso, normalmente não é idempotente.
+
+Idempotência não significa que as respostas precisam ser textualmente idênticas. Logs, datas, códigos de status ou outras condições observáveis podem variar, enquanto o efeito pretendido sobre o recurso permanece equivalente.
+
+### Códigos de status HTTP
+
+O status informa ao cliente como a requisição foi tratada.
+
+As famílias são:
+
+| Família | Significado geral |
+|---|---|
+| `1xx` | Informação |
+| `2xx` | Sucesso |
+| `3xx` | Redirecionamento |
+| `4xx` | Erro relacionado à requisição do cliente |
+| `5xx` | Falha do servidor ao processar uma requisição aparentemente válida |
+
+Status principais do curso:
+
+| Status | Nome | Uso previsto |
+|---:|---|---|
+| 200 | OK | Consulta ou atualização realizada |
+| 201 | Created | Recurso criado |
+| 204 | No Content | Operação concluída sem corpo de resposta |
+| 400 | Bad Request | Dados ou parâmetros inválidos |
+| 404 | Not Found | Recurso não encontrado |
+| 409 | Conflict | Conflito com regra ou estado existente |
+| 500 | Internal Server Error | Falha inesperada no servidor |
+
+Retornar sempre `200` e explicar o resultado apenas em uma mensagem no corpo prejudica clientes, testes, monitoramento e integração. Método, status, headers e body formam juntos o contrato HTTP.
+
+### Headers importantes
+
+Headers transportam metadados.
+
+| Header | Exemplo | Finalidade |
+|---|---|---|
+| `Content-Type` | `application/json` | Formato do corpo enviado |
+| `Accept` | `application/json` | Formato que o cliente deseja receber |
+| `Location` | `/api/produtos/10` | URI de um recurso criado |
+| `Authorization` | credencial apropriada | Autorização da requisição em aulas futuras |
+
+O conteúdo de `Authorization` nunca deve ser publicado em apostilas, prints, commits ou mensagens de erro.
+
+### JSON
+
+JSON significa **JavaScript Object Notation**. É um formato textual usado frequentemente para representar dados em APIs Web.
+
+Exemplo:
+
+```json
+{
+  "id": 10,
+  "descricao": "Caderno",
+  "saldoEstoque": 10,
+  "valorUnitario": 18.00,
+  "ativo": true
+}
+```
+
+Tipos básicos encontrados em JSON:
+
+| Tipo | Exemplo |
+|---|---|
+| String | `"Caderno"` |
+| Number | `18.00` |
+| Boolean | `true` |
+| Null | `null` |
+| Object | `{ "id": 10 }` |
+| Array | `[1, 2, 3]` |
+
+JSON não é o banco de dados, não é HTTP e não é REST. Ele é uma possível representação transferida no corpo de uma mensagem.
+
+Uma API também pode trabalhar com outros formatos, mas neste curso adotaremos JSON nas operações do domínio.
+
+### Objeto do domínio e representação não são a mesma coisa
+
+Considere um produto existente no servidor. Ele poderá estar:
+
+- representado por um objeto Java durante a execução;
+- persistido em linhas e colunas do banco;
+- transferido como JSON na resposta;
+- exibido como uma linha de tabela por uma interface web.
+
+Essas formas representam o mesmo conceito do domínio em contextos diferentes. Não devemos concluir que a tabela, o objeto Java e o JSON são literalmente a mesma coisa.
+
+Nas aulas de DTOs, controlaremos explicitamente qual representação atravessa a fronteira HTTP.
+
+### O que significa REST?
+
+REST significa **Representational State Transfer**. É um estilo arquitetural para sistemas distribuídos, não uma biblioteca e não uma anotação do Spring.
+
+Entre suas ideias estão:
+
+- separação cliente-servidor;
+- comunicação sem estado de sessão implícito entre requisições;
+- interface uniforme;
+- recursos identificáveis;
+- troca de representações;
+- possibilidade de camadas intermediárias;
+- uso adequado de cache quando aplicável.
+
+Neste curso construiremos uma API HTTP orientada a recursos e aplicaremos princípios REST de maneira progressiva.
+
+> Usar JSON e chamar caminhos de “REST” não garante que todas as restrições do estilo arquitetural REST estejam sendo atendidas.
+
+### Comunicação stateless
+
+Stateless significa que cada requisição deve conter as informações necessárias para ser compreendida, sem depender de uma conversa secreta armazenada na conexão anterior.
+
+Exemplo inadequado:
+
+```text
+Requisição 1: “vou escolher um produto”
+Requisição 2: “agora atualize aquele”
+```
+
+Exemplo identificável:
+
+```text
+PUT /api/produtos/10
+```
+
+A segunda forma identifica o alvo da operação.
+
+Stateless não significa:
+
+- que a aplicação não possui banco de dados;
+- que nenhum estado pode mudar;
+- que autenticação é proibida;
+- que todas as respostas são iguais.
+
+Significa que a interpretação da requisição não depende de estado conversacional implícito associado à conexão anterior.
+
+### Interface uniforme e nomes orientados a recursos
+
+Prefira substantivos que representem recursos:
+
+```text
+GET /api/produtos
+POST /api/produtos
+GET /api/produtos/10
+```
+
+Evite criar uma ação diferente na URI para cada operação básica:
+
+```text
+/api/listarProdutos
+/api/criarProduto
+/api/excluirProduto?id=10
+```
+
+Na primeira forma, o método HTTP expressa a intenção e a URI identifica o recurso.
+
+### API como contrato
+
+Imagine dois times:
+
+- Time A desenvolve a API.
+- Time B desenvolve o aplicativo móvel.
+
+O Time B precisa saber:
+
+```text
+Método: POST
+URI: /api/produtos
+Content-Type: application/json
+Campos obrigatórios: codigoBarra, descricao, saldoEstoque...
+Sucesso: 201
+Dados inválidos: 400
+Grupo inexistente: 404
+Código duplicado: 409
+```
+
+Isso é parte do contrato.
+
+Alterar um nome de campo, tipo, URI ou status pode quebrar clientes mesmo que o código Java compile. Por isso APIs precisam de documentação, testes e evolução cuidadosa.
+
+Mais adiante, poderemos representar esse contrato por meio de uma descrição OpenAPI.
+
+### Camadas da aplicação
+
+O projeto será organizado gradualmente em responsabilidades:
+
+```mermaid
+flowchart TD
+    C["Cliente"] -->|"HTTP / JSON"| A["Camada API / Controller"]
+    A -->|"chama caso de uso"| S["Camada Service"]
+    S -->|"consulta ou persiste"| R["Camada Repository"]
+    R -->|"SQL por meio do JPA"| B["Banco de dados"]
+    B --> R
+    R --> S
+    S --> A
+    A -->|"Resposta HTTP / JSON"| C
+```
+
+Responsabilidades planejadas:
+
+| Camada | Responsabilidade principal |
+|---|---|
+| Controller/API | Receber HTTP e construir a resposta HTTP |
+| Service | Coordenar casos de uso e regras |
+| Repository | Acessar a persistência |
+| Domain | Representar conceitos e comportamentos do negócio |
+| DTO/Mapper | Controlar dados que entram e saem da API |
+
+Nesta aula criaremos somente o primeiro controller. As outras camadas aparecerão quando seus problemas forem estudados.
+
+### Fluxo de uma requisição no Spring Boot
+
+Quando executarmos:
+
+```bash
+curl http://localhost:8080/api/health
+```
+
+ocorrerá um fluxo semelhante a:
+
+```mermaid
+sequenceDiagram
+    participant CLI as curl
+    participant T as Tomcat embutido
+    participant MVC as Spring MVC
+    participant HC as HealthController
+
+    CLI->>T: GET /api/health
+    T->>MVC: Encaminha a requisição
+    MVC->>HC: Chama health()
+    HC-->>MVC: Retorna "OK"
+    MVC-->>T: Monta resposta HTTP
+    T-->>CLI: 200 OK + corpo OK
+```
+
+O Spring Boot configura automaticamente a infraestrutura essencial com base nas dependências e no código presente no projeto.
+
+### Servidor embutido
+
+Ao selecionar Spring Web MVC, a aplicação recebe um servidor HTTP embutido compatível com a configuração do Spring Boot.
+
+Isso significa que podemos iniciar a aplicação por:
+
+```bash
+./mvnw spring-boot:run
+```
+
+ou, depois de empacotá-la:
+
+```bash
+java -jar target/nome-do-projeto.jar
+```
+
+Não é necessário instalar um Tomcat externo para executar este projeto como JAR.
+
+O servidor externo estudado em outros materiais continua relevante para outros modelos de aplicação Java, mas não é requisito deste projeto Spring Boot.
+
+### Inversão de controle e container Spring
+
+Em Java puro, frequentemente criamos diretamente os objetos de que precisamos:
+
+```java
+Servico servico = new Servico();
+```
+
+No Spring, muitos objetos da aplicação são criados e administrados pelo **container Spring**. Esses objetos gerenciados são chamados de **beans**.
+
+Em vez de cada classe construir todas as suas dependências, o container pode fornecê-las. Esse princípio é chamado de **inversão de controle**; o fornecimento das dependências é chamado de **injeção de dependência**.
+
+Nesta aula, `@RestController` permite que o Spring reconheça e gerencie `HealthController`.
+
+Nas próximas aulas usaremos injeção por construtor:
+
+```java
+public ProdutoController(ProdutoService service) {
+    this.service = service;
+}
+```
+
+O controller dependerá de uma abstração de serviço recebida externamente, em vez de criá-la diretamente.
+
+### O papel do Spring Boot
+
+Spring Framework oferece recursos de infraestrutura e programação. Spring Boot facilita a configuração e a inicialização de uma aplicação Spring.
+
+Ele utiliza:
+
+- configuração automática;
+- starters;
+- convenções;
+- servidor embutido;
+- integração com ferramentas de build;
+- configurações externas;
+- recursos de execução e observabilidade.
+
+Spring Boot não elimina a necessidade de compreender Java, HTTP, banco de dados ou arquitetura. Ele reduz configurações repetitivas para que possamos concentrar a aula no comportamento da aplicação.
+
+### O que o endpoint de health verifica?
+
+Nesta aula teremos:
+
+```text
+GET /api/health
+```
+
+Resposta:
+
+```text
+OK
+```
+
+Esse endpoint simples confirma inicialmente que:
+
+- o processo Java iniciou;
+- o Spring criou o contexto;
+- o servidor HTTP está ouvindo;
+- o Spring MVC encontrou o controller;
+- a rota foi mapeada;
+- requisição e resposta atravessaram o fluxo básico.
+
+Ele ainda não confirma:
+
+- acesso ao banco;
+- integridade das migrations;
+- disponibilidade de integrações externas;
+- funcionamento de todas as regras de negócio;
+- segurança da aplicação.
+
+Um health check de produção costuma ser mais completo. Nesta aula usaremos a forma mínima por finalidade pedagógica.
+
+### Traduzindo a API para o tema do estudante
+
+O formato geral se mantém, mas os recursos devem representar o tema escolhido.
+
+| Referência | Biblioteca | Oficina | Eventos |
+|---|---|---|---|
+| `/api/grupos-produtos` | `/api/categorias-livros` | `/api/categorias-servicos` | `/api/categorias-eventos` |
+| `/api/produtos` | `/api/livros` | `/api/servicos` | `/api/eventos` |
+
+Todos começam nesta aula com:
+
+```text
+GET /api/health
+```
+
+O health representa a aplicação, não uma entidade específica, e poderá permanecer igual em todos os temas.
+
+### Síntese conceitual
+
+```text
+API       = interface utilizada por outro software
+API Web   = API acessada por tecnologias da Web
+HTTP      = protocolo de requisição e resposta
+URI       = identifica o alvo/recurso
+Método    = expressa a intenção da requisição
+Header    = transporta metadados
+Body      = transporta uma representação quando necessário
+JSON      = formato possível para representar dados
+Status    = informa o resultado HTTP
+REST      = estilo arquitetural, não formato ou biblioteca
+Endpoint  = operação acessível pela combinação de método e caminho
+Spring    = framework que gerencia componentes e infraestrutura
+Spring Boot = ferramenta que facilita configurar e executar aplicações Spring
+```
 
 ---
 
@@ -1441,21 +2074,62 @@ No Windows:
 
 ## 26. Perguntas de revisão
 
-1. Qual é a finalidade do Spring Initializr?
-2. Qual é a diferença entre o projeto de referência e o projeto temático?
-3. Por que o tema precisa de duas entidades relacionadas?
-4. Por que precisamos de uma medida e um valor monetário?
-5. O que representa o `groupId`?
-6. O que representa o `artifactId`?
-7. Para que serve o `pom.xml`?
-8. O que é um starter?
-9. Por que usar o Maven Wrapper?
-10. Qual é a função de `@SpringBootApplication`?
-11. Por que a classe principal fica no pacote raiz?
-12. O que `@RestController` indica?
-13. O que significa receber HTTP 200?
-14. Por que não devemos selecionar todas as dependências no Initializr?
-15. Por que `.idea` e `target` não devem ser versionados?
+1. O que é uma API?
+2. Por que nem toda API é uma API Web?
+3. Quais são os papéis do cliente e do servidor?
+4. Quais componentes formam uma requisição HTTP?
+5. Quais componentes formam uma resposta HTTP?
+6. Qual é a diferença entre recurso, URI e endpoint?
+7. Por que `GET /api/produtos` e `POST /api/produtos` são endpoints diferentes?
+8. Qual é a finalidade de `Content-Type`?
+9. Qual é a diferença entre HTTP e JSON?
+10. Qual é a diferença entre CRUD e os métodos HTTP?
+11. O que significa um método ser seguro?
+12. O que significa idempotência?
+13. Qual é a diferença geral entre status `4xx` e `5xx`?
+14. Por que uma API não deve retornar `200` para todo resultado?
+15. O que significa uma comunicação stateless?
+16. Por que JSON não é sinônimo de REST?
+17. O que faz parte do contrato público de uma API?
+18. Qual é a responsabilidade inicial de controller, service e repository?
+19. O que o endpoint `/api/health` confirma e o que ele ainda não confirma?
+20. O que são inversão de controle, injeção de dependência e bean?
+21. Qual é a finalidade do Spring Initializr?
+22. Qual é a diferença entre o projeto de referência e o projeto temático?
+23. Por que o tema precisa de duas entidades relacionadas?
+24. Por que precisamos de uma medida e um valor monetário?
+25. O que representa o `groupId`?
+26. O que representa o `artifactId`?
+27. Para que serve o `pom.xml`?
+28. O que é um starter?
+29. Por que usar o Maven Wrapper?
+30. Qual é a função de `@SpringBootApplication`?
+31. Por que a classe principal fica no pacote raiz?
+32. O que `@RestController` indica?
+33. O que significa receber HTTP 200?
+34. Por que não devemos selecionar todas as dependências no Initializr?
+35. Por que `.idea` e `target` não devem ser versionados?
+
+---
+
+## Avaliação da aprendizagem
+
+| Critério | Insuficiente | Em desenvolvimento | Adequado | Avançado |
+|---|---|---|---|---|
+| Modelo de API | confunde API, HTTP, JSON e REST | define termos sem relacioná-los | explica requisição, resposta, recurso e contrato | analisa semântica, estado e limites do endpoint |
+| Tema | não respeita a estrutura mínima | possui entidades com lacunas de domínio | tema é compatível e está documentado | justifica nomes, medidas, estados e relacionamento |
+| Configuração | projeto não compila ou antecipa dependências | funciona após correções não explicadas | Java, Boot, package e dependências estão coerentes | explica o efeito de cada decisão do Initializr |
+| Endpoint | não responde como especificado | responde sem evidência completa | retorna corpo `OK` e status 200 verificados | distingue claramente o que o health confirma e não confirma |
+| Reprodutibilidade | depende da IDE ou contém arquivos locais | Wrapper ou Git estão incompletos | testes passam pelo Wrapper e commit é limpo | reproduz o projeto em ambiente limpo e interpreta evidências |
+| Argumentação | apenas repete o roteiro | apresenta justificativas parciais | relaciona conceitos às decisões práticas | compara alternativas e explicita simplificações didáticas |
+
+Sugestão de composição da nota:
+
+- fundamentos e explicação da API: 25%;
+- compatibilidade e documentação do tema: 20%;
+- configuração e estrutura do projeto: 20%;
+- execução e verificação do endpoint: 20%;
+- Git, reprodutibilidade e qualidade da argumentação: 15%.
 
 ---
 
@@ -1557,6 +2231,7 @@ git push origin aula-02-projeto-spring-boot
 
 | Etapa | Tempo aproximado |
 |---|---:|
+| Fundamentos de API, HTTP, REST e JSON | 50 minutos |
 | Referência e contrato de tema | 25 minutos |
 | Escolha e validação dos temas | 30 minutos |
 | Demonstração pelo site | 25 minutos |
@@ -1565,7 +2240,7 @@ git push origin aula-02-projeto-spring-boot
 | Execução e health endpoint | 30 minutos |
 | GitHub, revisão e fechamento | 20 minutos |
 
-Adapte à duração da aula. Se necessário, a ficha de tema pode ser entregue como atividade preparatória.
+Adapte à duração da aula. Pelo volume conceitual e prático, o conteúdo pode ocupar dois encontros: um para fundamentos e definição do tema, outro para geração, execução e versionamento. Se necessário, a ficha de tema pode ser entregue como atividade preparatória.
 
 ### 29.2 Controle dos temas
 
@@ -1599,6 +2274,11 @@ Não fornecer apenas um bloco de código para substituição automática de pala
 
 ## Referências oficiais
 
+- [RFC 9110 — Semântica HTTP](https://www.rfc-editor.org/rfc/rfc9110.html)
+- [Dissertação de Roy Fielding — REST](https://ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm)
+- [Spring Web MVC — Spring Framework](https://docs.spring.io/spring-framework/reference/web/webmvc.html)
+- [Controllers anotados no Spring MVC](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller.html)
+- [OpenAPI Specification](https://spec.openapis.org/oas/)
 - [Spring Initializr](https://start.spring.io/)
 - [Criando uma aplicação com Spring Boot — Spring](https://spring.io/guides/gs/spring-boot)
 - [Spring Boot project wizard — IntelliJ IDEA](https://www.jetbrains.com/help/idea/spring-initializr-project-wizard.html)

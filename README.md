@@ -11,7 +11,7 @@ API didática desenvolvida na disciplina de Programação da graduação em Sist
 
 - Java 21
 - Git
-- IntelliJ IDEA Ultimate
+- IntelliJ IDEA com recursos Ultimate ativos para o roteiro principal; o Spring Initializr oferece o caminho independente da IDE
 - Docker Desktop, utilizado nas aulas de PostgreSQL e containerização
 
 ## Organização do curso
@@ -26,11 +26,48 @@ O sistema será construído incrementalmente. Cada aula termina em um estado exe
 | 01 | Configuração do ambiente | [Abrir Aula 01](docs/01aula/01aula.md) |
 | 02 | Criação do projeto e definição do tema | [Abrir Aula 02](docs/02aula/02aula.md) |
 
+## Organização pedagógica
+
+As aulas combinam fundamentação conceitual, implementação incremental, evidências de execução, diagnóstico, atividade de transferência e avaliação. O material não deve apresentar código ou configuração como uma sequência isolada de procedimentos.
+
+- [Padrão pedagógico obrigatório das aulas](docs/PADRAO-PEDAGOGICO.md)
+- [Revisão pedagógica das Aulas 00 a 02](docs/REVISAO-PEDAGOGICA-AULAS-00-02.md)
+
 ## Projeto de referência
 
 O `suporteos2026` demonstra um controle simplificado de produtos organizados por grupos. Cada estudante deverá escolher um tema compatível, documentá-lo e manter esse mesmo domínio durante as próximas aulas.
 
 - [Consultar o tema do projeto de referência](docs/tema-do-projeto.md)
+
+## Executando o projeto
+
+No Windows:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+No macOS ou Linux:
+
+```bash
+./mvnw spring-boot:run
+```
+
+Com a aplicação iniciada, acesse <http://localhost:8080/api/health>. A resposta esperada é `OK`.
+
+## Executando os testes
+
+No Windows:
+
+```powershell
+.\mvnw.cmd test
+```
+
+No macOS ou Linux:
+
+```bash
+./mvnw test
+```
 
 ## Histórico didático
 

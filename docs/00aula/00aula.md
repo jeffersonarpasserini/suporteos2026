@@ -33,6 +33,60 @@ Ao concluir esta aula, o estudante deverá ser capaz de:
 8. Entender a finalidade das tags utilizadas no curso.
 9. Reconhecer arquivos que não devem ser enviados ao GitHub.
 
+## Fundamentos acadêmicos do controle de versão
+
+### Controle de versão como memória verificável
+
+Um sistema de controle de versão registra **estados significativos** de um conjunto de arquivos e as relações entre esses estados. O benefício não se limita a “guardar cópias”: o histórico associa conteúdo, autoria, data e relação de precedência, permitindo investigar quando e por que uma mudança entrou no projeto.
+
+O Git modela commits como **snapshots** do projeto. Cada commit referencia seu conteúdo e o commit anterior — ou mais de um, em uma integração — formando um grafo dirigido acíclico. Branches e tags não duplicam o projeto: são referências para commits.
+
+```mermaid
+gitGraph
+    commit id: "A: início"
+    commit id: "B: documentação"
+    branch atividade
+    commit id: "C: experimento"
+    checkout main
+    commit id: "D: repositório-base" tag: "aula-00-inicio"
+```
+
+| Conceito | Interpretação |
+|---|---|
+| Commit | snapshot identificado e ligado ao histórico |
+| Branch | referência móvel para a ponta de uma linha de desenvolvimento |
+| Tag | referência destinada a identificar um marco estável |
+| Merge | operação que integra histórias de desenvolvimento |
+| Hash | identificador derivado do conteúdo e dos metadados do objeto |
+
+O identificador baseado em hash ajuda a detectar alteração de conteúdo e encadeia objetos do histórico. Isso oferece **integridade**, mas não transforma Git em sistema completo de backup, autorização ou guarda de segredos.
+
+### Sistema distribuído
+
+O Git é distribuído: após o clone, o repositório local contém arquivos de trabalho e histórico. Commits, consultas e branches podem ser criados sem conexão permanente com um servidor. O GitHub hospeda uma cópia remota e coordena colaboração, permissões e automações; ele não substitui o Git.
+
+Comparado a um modelo centralizado, o modelo distribuído reduz a dependência operacional do servidor para operações locais, mas exige que o estudante entenda a diferença entre **histórico local** e **histórico publicado**. É por isso que `commit` e `push` não são sinônimos.
+
+### Unidade lógica e rastreabilidade
+
+Um bom commit representa uma unidade lógica: alterações relacionadas, pequenas o suficiente para revisão e completas o suficiente para preservar um estado coerente. Mensagens significativas aumentam a rastreabilidade entre intenção e implementação. Commits gigantes ou que misturam assuntos dificultam revisão, reversão e diagnóstico.
+
+### Reprodutibilidade e pontos de quebra
+
+As tags do curso funcionam como marcos didáticos. Cada uma deve apontar para um estado executável e verificável. Isso permite que professor e estudantes reconstruam o sistema a partir do mesmo ponto, comparem resultados e isolem em qual intervalo uma falha foi introduzida.
+
+### Da teoria para a prática
+
+| Ação | Conceito observado |
+|---|---|
+| `git status` | estado entre diretório de trabalho, índice e commit atual |
+| `git diff` | diferença ainda não preparada |
+| `git diff --staged` | diferença selecionada para o próximo commit |
+| `git commit` | criação de um snapshot lógico no repositório local |
+| `git push` | publicação de referências e objetos no remoto |
+| `git tag` | nomeação de um marco do histórico |
+| novo clone em outra pasta | teste parcial de reprodutibilidade do conteúdo publicado |
+
 ## Pré-requisitos
 
 - Uma conta no GitHub.
@@ -921,6 +975,18 @@ O diretório de trabalho deve terminar sem alterações pendentes.
 8. Qual é a diferença entre branch e tag?
 9. Por que `.env` deve ser ignorado?
 10. O que deve ser feito se uma credencial for publicada?
+
+## Avaliação da aprendizagem
+
+| Critério | Insuficiente | Em desenvolvimento | Adequado | Avançado |
+|---|---|---|---|---|
+| Modelo Git | confunde arquivo salvo, commit e push | reconhece comandos sem explicar estados | explica trabalho, índice, histórico e remoto | relaciona snapshots, grafo, branches e tags |
+| Execução | depende integralmente de comandos fornecidos | executa o fluxo com correções frequentes | cria, confere e publica um commit coerente | diagnostica divergências preservando o histórico |
+| Rastreabilidade | mistura assuntos e usa mensagem genérica | separa parte das mudanças | cria unidade lógica com mensagem significativa | justifica o ponto de quebra e testa sua recuperação |
+| Segurança | inclui segredo ou arquivo local | reconhece riscos após orientação | aplica `.gitignore` e revisa o diff | explica por que ignorar não revoga segredo publicado |
+| Evidências | afirma que concluiu sem verificação | apresenta evidência parcial | mostra status, log e remoto coerentes | reproduz o marco a partir de novo clone |
+
+Sugestão de atividade avaliativa: 30% modelo conceitual, 40% execução do fluxo, 20% evidências e 10% segurança e clareza.
 
 ---
 
