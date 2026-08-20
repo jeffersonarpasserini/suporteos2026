@@ -1,0 +1,134 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-01-create-produto
+      author: curso-spring-2026
+      comment: Cria a tabela principal de produtos.
+      changes:
+        - createTable:
+            tableName: produto
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_produto
+                    nullable: false
+              - column:
+                  name: codigo_barras
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: descricao
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: saldo_estoque
+                  type: NUMERIC(18,3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: valor_unitario
+                  type: NUMERIC(18,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: data_cadastro
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: grupo_produto_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: produto
+
+  - changeSet:
+      id: 002-02-unique-codigo-barras
+      author: curso-spring-2026
+      comment: Garante a unicidade global do código de barras.
+      changes:
+        - addUniqueConstraint:
+            tableName: produto
+            columnNames: codigo_barras
+            constraintName: uk_produto_codigo_barras
+      rollback:
+        - dropUniqueConstraint:
+            tableName: produto
+            constraintName: uk_produto_codigo_barras
+
+  - changeSet:
+      id: 002-03-foreign-key-grupo-produto
+      author: curso-spring-2026
+      comment: Liga cada produto ao seu grupo.
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: produto
+            baseColumnNames: grupo_produto_id
+            referencedTableName: grupo_produto
+            referencedColumnNames: id
+            constraintName: fk_produto_grupo_produto
+            onDelete: RESTRICT
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: produto
+            constraintName: fk_produto_grupo_produto
+
+  - changeSet:
+      id: 002-04-check-saldo-estoque
+      author: curso-spring-2026
+      comment: Impede saldo negativo inclusive fora da aplicação Java.
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE produto
+              ADD CONSTRAINT ck_produto_saldo_estoque
+              CHECK (saldo_estoque >= 0)
+      rollback:
+        - sql:
+            sql: >
+              ALTER TABLE produto
+              DROP CONSTRAINT ck_produto_saldo_estoque
+
+  - changeSet:
+      id: 002-05-check-valor-unitario
+      author: curso-spring-2026
+      comment: Impede valor unitário negativo inclusive fora da aplicação Java.
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE produto
+              ADD CONSTRAINT ck_produto_valor_unitario
+              CHECK (valor_unitario >= 0)
+      rollback:
+        - sql:
+            sql: >
+              ALTER TABLE produto
+              DROP CONSTRAINT ck_produto_valor_unitario
+
+  - changeSet:
+      id: 002-06-check-status-produto
+      author: curso-spring-2026
+      comment: Restringe o status aos valores definidos no enum Java.
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE produto
+              ADD CONSTRAINT ck_produto_status
+              CHECK (status IN ('ATIVO', 'INATIVO'))
+      rollback:
+        - sql:
+            sql: >
+              ALTER TABLE produto
+              DROP CONSTRAINT ck_produto_status

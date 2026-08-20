@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-01-create-grupo-produto
+      author: curso-spring-2026
+      comment: Cria a tabela que classifica os produtos.
+      changes:
+        - createTable:
+            tableName: grupo_produto
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_grupo_produto
+                    nullable: false
+              - column:
+                  name: nome
+                  type: VARCHAR(120)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: grupo_produto
+
+  - changeSet:
+      id: 001-02-check-status-grupo-produto
+      author: curso-spring-2026
+      comment: Restringe o status aos valores definidos no enum Java.
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE grupo_produto
+              ADD CONSTRAINT ck_grupo_produto_status
+              CHECK (status IN ('ATIVO', 'INATIVO'))
+      rollback:
+        - sql:
+            sql: >
+              ALTER TABLE grupo_produto
+              DROP CONSTRAINT ck_grupo_produto_status

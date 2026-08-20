@@ -26,6 +26,7 @@ O sistema será construído incrementalmente. Cada aula termina em um estado exe
 | 01 | Configuração do ambiente | [Abrir Aula 01](docs/01aula/01aula.md) |
 | 02 | Criação do projeto e definição do tema | [Abrir Aula 02](docs/02aula/02aula.md) |
 | 03 | Modelagem de domínio com Java puro | [Abrir Aula 03](docs/03aula/03aula.md) |
+| 04 | Persistência com JPA, PostgreSQL, profiles e Liquibase | [Abrir Aula 04](docs/04aula/04aula.md) |
 
 ## Organização pedagógica
 
@@ -45,12 +46,16 @@ O `suporteos2026` demonstra um controle simplificado de produtos organizados por
 No Windows:
 
 ```powershell
+$env:SPRING_PROFILES_ACTIVE = "dev"
+$env:DB_DEV_PASSWORD = "sua_senha_local"
 .\mvnw.cmd spring-boot:run
 ```
 
 No macOS ou Linux:
 
 ```bash
+export SPRING_PROFILES_ACTIVE=dev
+export DB_DEV_PASSWORD='sua_senha_local'
 ./mvnw spring-boot:run
 ```
 
@@ -58,25 +63,29 @@ Com a aplicação iniciada, acesse <http://localhost:8080/api/health>. A respost
 
 ## Modelo de domínio atual
 
-Na Aula 03, o projeto passou a representar grupos e produtos em memória:
+Na Aula 04, o modelo de grupos e produtos passou a ser persistido no PostgreSQL:
 
 ```text
 GrupoProduto 1 ─────── N Produto
 ```
 
-As classes estão no pacote `com.curso.suporteos.domain` e não dependem de Spring ou JPA. As regras de criação, movimentação de estoque, associação e cálculo monetário são verificadas por testes unitários.
+As classes estão no pacote `com.curso.suporteos.domain`, são mapeadas com JPA e preservam as regras de negócio da Aula 03. O Liquibase cria e versiona o esquema; o Hibernate apenas o valida. Os profiles `dev`, `test` e `prod` usam PostgreSQL, sem H2.
 
 ## Executando os testes
+
+Os testes da Aula 04 acessam `suporteos2026_test`. Defina `DB_TEST_PASSWORD` antes da execução.
 
 No Windows:
 
 ```powershell
+$env:DB_TEST_PASSWORD = "sua_senha_local"
 .\mvnw.cmd test
 ```
 
 No macOS ou Linux:
 
 ```bash
+export DB_TEST_PASSWORD='sua_senha_local'
 ./mvnw test
 ```
 
