@@ -43,20 +43,20 @@ O `suporteos2026` demonstra um controle simplificado de produtos organizados por
 
 ## Executando o projeto
 
+Na primeira execução, copie `.env.example` para `.env`, preencha `DB_DEV_PASSWORD` e `DB_TEST_PASSWORD` e mantenha esse arquivo fora do Git.
+
 No Windows:
 
 ```powershell
-$env:SPRING_PROFILES_ACTIVE = "dev"
-$env:DB_DEV_PASSWORD = "sua_senha_local"
-.\mvnw.cmd spring-boot:run
+Copy-Item .env.example .env
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
 ```
 
 No macOS ou Linux:
 
 ```bash
-export SPRING_PROFILES_ACTIVE=dev
-export DB_DEV_PASSWORD='sua_senha_local'
-./mvnw spring-boot:run
+cp .env.example .env
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 Com a aplicação iniciada, acesse <http://localhost:8080/api/health>. A resposta esperada é `OK`.
@@ -73,19 +73,17 @@ As classes estão no pacote `com.curso.suporteos.domain`, são mapeadas com JPA 
 
 ## Executando os testes
 
-Os testes da Aula 04 acessam `suporteos2026_test`. Defina `DB_TEST_PASSWORD` antes da execução.
+Os testes da Aula 04 acessam `suporteos2026_test` e leem `DB_TEST_PASSWORD` do `.env` local ou das variáveis do ambiente de execução.
 
 No Windows:
 
 ```powershell
-$env:DB_TEST_PASSWORD = "sua_senha_local"
 .\mvnw.cmd test
 ```
 
 No macOS ou Linux:
 
 ```bash
-export DB_TEST_PASSWORD='sua_senha_local'
 ./mvnw test
 ```
 

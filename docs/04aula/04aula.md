@@ -145,14 +145,14 @@ Todos usam PostgreSQL. Bancos diferentes evitam que testes alterem dados usados 
 
 Variáveis de ambiente separam código e configuração. A senha varia por máquina, não pertence ao repositório e não deve aparecer em `application.properties`, prints, commits ou logs.
 
-> Um arquivo `.env` é uma convenção de armazenamento local; o Spring Boot não o carrega automaticamente. IntelliJ, terminal, Docker Compose ou outra ferramenta precisa transformar suas entradas em variáveis do processo Java.
+Um arquivo `.env` é uma convenção para reunir configurações locais. O Spring Boot não procura esse nome automaticamente, mas permite importá-lo explicitamente como um arquivo de propriedades sem extensão. Nesta aula, os profiles `dev` e `test` farão essa importação; `prod` continuará recebendo segredos exclusivamente do ambiente de implantação.
 
 ## 6. Mapeamento teoria–prática
 
 | Ação | Conceito exercitado |
 |---|---|
 | separar bancos `dev` e `test` | isolamento de ambientes |
-| criar `.env.example` | contrato de configuração sem segredo |
+| copiar `.env.example` para `.env` | configuração local sem versionar segredos |
 | adicionar o starter Liquibase | migração integrada ao ciclo de inicialização |
 | criar `db.changelog-master.yaml` | ordem e composição do histórico |
 | usar `@Entity` e `@Id` | identidade persistente |
@@ -237,7 +237,7 @@ O proprietário pode criar tabelas nesses bancos, mas não recebe automaticament
 
 ## 9. Checkpoint 3 — variáveis e profiles
 
-Crie `.env.example` na raiz. Este arquivo contém nomes e exemplos, nunca senhas reais:
+O repositório contém `.env.example` na raiz. Esse arquivo é um **modelo versionável**: apresenta os nomes esperados, mas nunca contém senhas reais.
 
 ```dotenv
 # Desenvolvimento
@@ -258,6 +258,55 @@ DB_PASSWORD=substitua_pelo_segredo_da_plataforma
 
 Confirme que `.gitignore` ignora `.env` e permite `.env.example`.
 
+### 9.1 Criar o arquivo local `.env`
+
+Cada estudante cria sua própria cópia. Esse arquivo não deve ser enviado a colegas nem ao GitHub.
+
+No Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+No macOS ou Linux:
+
+```bash
+cp .env.example .env
+```
+
+Abra `.env` no IntelliJ e substitua somente os valores locais:
+
+```dotenv
+DB_DEV_URL=jdbc:postgresql://localhost:5432/suporteos2026_dev
+DB_DEV_USERNAME=suporteos_app
+DB_DEV_PASSWORD=SENHA_ESCOLHIDA_AO_CRIAR_O_USUARIO
+
+DB_TEST_URL=jdbc:postgresql://localhost:5432/suporteos2026_test
+DB_TEST_USERNAME=suporteos_app
+DB_TEST_PASSWORD=SENHA_ESCOLHIDA_AO_CRIAR_O_USUARIO
+```
+
+Regras do formato usado nesta aula:
+
+- uma atribuição `NOME=valor` por linha;
+- não escreva espaços ao redor de `=`;
+- linhas iniciadas por `#` são comentários;
+- use exatamente os nomes definidos no exemplo;
+- não acrescente `export` dentro do arquivo;
+- não coloque a senha entre aspas, a menos que as aspas façam parte dela;
+- evite caracteres de quebra de linha no segredo didático local.
+
+Verifique a proteção antes de continuar:
+
+```bash
+git status --short
+git check-ignore -v .env
+```
+
+O segundo comando deve mostrar a regra do `.gitignore`. O primeiro **não pode** listar `.env` como arquivo novo.
+
+> Ocultar o arquivo do Git não o transforma em cofre. Ele continua armazenado em texto na máquina. Use uma senha exclusiva para o ambiente da disciplina e nunca reutilize credenciais pessoais ou de produção.
+
 ### `src/main/resources/application.properties`
 
 ```properties
@@ -273,6 +322,8 @@ spring.jpa.open-in-view=false
 ### `src/main/resources/application-dev.properties`
 
 ```properties
+spring.config.import=optional:file:./.env[.properties]
+
 spring.datasource.url=${DB_DEV_URL:jdbc:postgresql://localhost:5432/suporteos2026_dev}
 spring.datasource.username=${DB_DEV_USERNAME:suporteos_app}
 spring.datasource.password=${DB_DEV_PASSWORD}
@@ -281,11 +332,22 @@ spring.jpa.properties.hibernate.format_sql=true
 logging.level.liquibase=INFO
 ```
 
-Os valores após `:` são padrões não secretos. A senha não possui padrão: se estiver ausente, a aplicação deve falhar claramente.
+`optional:file:./.env[.properties]` significa:
+
+- `optional:`: a ausência do arquivo não interrompe imediatamente a leitura da configuração;
+- `file:./`: procurar no diretório de trabalho da aplicação, normalmente a raiz do projeto;
+- `.env`: nome do arquivo local;
+- `[.properties]`: informar ao Spring que o arquivo sem extensão deve ser interpretado no formato Java Properties.
+
+Os valores após `:` são padrões não secretos. A senha não possui padrão: se `.env` estiver ausente e nenhuma variável de ambiente tiver sido fornecida, a aplicação falhará com uma mensagem de placeholder não resolvido.
+
+Variáveis reais do sistema operacional têm precedência sobre o valor importado. Isso permite que CI, contêineres e servidores injetem configurações sem depender do arquivo local.
 
 ### `src/test/resources/application-test.properties`
 
 ```properties
+spring.config.import=optional:file:./.env[.properties]
+
 spring.datasource.url=${DB_TEST_URL:jdbc:postgresql://localhost:5432/suporteos2026_test}
 spring.datasource.username=${DB_TEST_USERNAME:suporteos_app}
 spring.datasource.password=${DB_TEST_PASSWORD}
@@ -293,7 +355,7 @@ spring.jpa.show-sql=false
 logging.level.liquibase=INFO
 ```
 
-O arquivo de teste fica em `src/test/resources`; por isso não é empacotado no artefato de produção.
+O arquivo de teste fica em `src/test/resources`; por isso não é empacotado no artefato de produção. Ele importa o mesmo `.env`, mas lê as chaves `DB_TEST_*` e acessa outro banco.
 
 ### `src/main/resources/application-prod.properties`
 
@@ -311,30 +373,33 @@ logging.level.liquibase=INFO
 1. Abra **Run > Edit Configurations**.
 2. Selecione a configuração da classe `Suporteos2026Application`.
 3. Em **Active profiles**, informe `dev`. Se esse campo não aparecer, use a variável `SPRING_PROFILES_ACTIVE=dev`.
-4. Em **Environment variables**, informe `DB_DEV_PASSWORD=...`.
-5. Opcionalmente informe URL e usuário; os padrões locais já estão declarados.
-6. Não cole a senha em **Program arguments**, pois argumentos podem aparecer em listagens do sistema.
-7. Execute e confirme no log: `The following 1 profile is active: "dev"`.
+4. Confirme que **Working directory** aponta para a raiz do projeto, onde está `.env`.
+5. Não é necessário copiar a senha para **Program arguments** ou **VM options**.
+6. Execute e confirme no log: `The following 1 profile is active: "dev"`.
+
+O IntelliJ Ultimate também permite selecionar um arquivo `.env` diretamente no campo **Environment variables**. Essa é uma alternativa válida: a IDE transforma as entradas do arquivo em variáveis do processo. No projeto do curso, a importação explícita pelo Spring foi escolhida porque também funciona com Maven no terminal e mantém o mesmo procedimento nos três sistemas operacionais.
 
 ### Executar no terminal
 
 macOS ou Linux:
 
 ```bash
-export SPRING_PROFILES_ACTIVE=dev
-export DB_DEV_PASSWORD='sua_senha_local'
-./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 PowerShell:
 
 ```powershell
-$env:SPRING_PROFILES_ACTIVE = "dev"
-$env:DB_DEV_PASSWORD = "sua_senha_local"
-.\mvnw.cmd spring-boot:run
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
 ```
 
-As variáveis valem para o processo/sessão em que foram definidas. Evite registrar comandos contendo senhas no histórico compartilhado.
+O profile ainda precisa ser escolhido conscientemente; o `.env` fornece a configuração, mas não decide o ambiente. A senha não aparece no comando nem no histórico do terminal.
+
+### 9.2 Produção não utiliza o `.env` local
+
+Observe que `application-prod.properties` não possui `spring.config.import`. Em produção, `DB_URL`, `DB_USERNAME` e `DB_PASSWORD` devem ser fornecidos pelo serviço de implantação, secret manager, Docker/Kubernetes ou outro mecanismo aprovado.
+
+Essa separação evita transformar o `.env` do estudante em padrão arquitetural para armazenamento de segredos reais.
 
 ---
 
@@ -832,6 +897,37 @@ databaseChangeLog:
 
 Uma coluna obrigatória em tabela que já contém dados exige estratégia: valor temporário, preenchimento e só depois `NOT NULL`, ou outra decisão de migração. Alterar produção não é igual a criar uma tabela vazia.
 
+### Geração assistida será estudada em uma aula própria
+
+Nesta aula escrevemos os changelogs manualmente para compreender tabela, tipo, constraint, ordem, rollback e intenção. Quando o curso implementar uma nova entidade ou adicionar campos, uma aula específica estudará a **geração assistida de changelog**.
+
+Essa aula deverá comparar dois mecanismos:
+
+1. `generate-changelog`, que lê a estrutura de um banco existente;
+2. `diff-changelog`/`mvn liquibase:diff` com a extensão Hibernate, que compara o metamodelo das classes JPA com o PostgreSQL.
+
+O fluxo esperado será:
+
+```text
+alterar ou criar classe JPA
+        ↓
+compilar o projeto
+        ↓
+gerar um changelog de rascunho
+        ↓
+revisar nomes, tipos, constraints, dados e rollback
+        ↓
+executar em banco de teste
+        ↓
+validar SQL, histórico e testes
+        ↓
+incorporar a migração revisada ao changelog mestre
+```
+
+O arquivo gerado nunca será aceito automaticamente como versão final. A ferramenta identifica diferenças estruturais, mas não conhece toda a intenção de negócio, a estratégia para dados existentes nem se um rollback é seguro.
+
+Antes dessa aula, o professor deverá validar a compatibilidade da extensão `liquibase-hibernate` com as versões de Spring Boot e Hibernate usadas no semestre. Na versão atual deste projeto, o Hibernate é 7.x, enquanto a integração comunitária oficial documenta explicitamente a extensão para Hibernate 6.x.
+
 ## 18. Diagnóstico orientado por evidências
 
 | Sintoma | Hipótese | Como confirmar | Correção |
@@ -990,6 +1086,7 @@ Demonstrações recomendadas:
 - provocar uma divergência entre coluna e entidade;
 - tentar inserir saldo negativo diretamente no banco;
 - mostrar que `.env` não é carregado magicamente pelo Spring;
+- demonstrar que o nome `.env` só funciona porque adicionamos um `spring.config.import` explícito;
 - discutir por que `clearCheckSums` não é correção automática.
 
 Para turmas mais rápidas, peça o desenho seguro de uma migração `003` que adicione coluna obrigatória quando já existem linhas, sem executá-la no projeto de referência.
@@ -998,6 +1095,7 @@ Para turmas mais rápidas, peça o desenho seguro de uma migração `003` que ad
 
 - [Spring Boot — Profiles](https://docs.spring.io/spring-boot/reference/features/profiles.html)
 - [Spring Boot — Externalized Configuration](https://docs.spring.io/spring-boot/reference/features/external-config.html)
+- [IntelliJ IDEA — Environment variables e arquivos `.env`](https://www.jetbrains.com/help/idea/program-arguments-and-environment-variables.html)
 - [Spring Boot — Database Initialization e Liquibase](https://docs.spring.io/spring-boot/how-to/data-initialization.html)
 - [Spring Boot — SQL Databases e JPA](https://docs.spring.io/spring-boot/reference/data/sql.html)
 - [Hibernate ORM User Guide — Associations](https://docs.hibernate.org/orm/7.1/userguide/html_single/)
