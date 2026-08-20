@@ -25,6 +25,7 @@ O sistema será construído incrementalmente. Cada aula termina em um estado exe
 | 00 | GitHub e início do projeto | [Abrir Aula 00](docs/00aula/00aula.md) |
 | 01 | Configuração do ambiente | [Abrir Aula 01](docs/01aula/01aula.md) |
 | 02 | Criação do projeto e definição do tema | [Abrir Aula 02](docs/02aula/02aula.md) |
+| 03 | Modelagem de domínio com Java puro | [Abrir Aula 03](docs/03aula/03aula.md) |
 
 ## Organização pedagógica
 
@@ -54,6 +55,16 @@ No macOS ou Linux:
 ```
 
 Com a aplicação iniciada, acesse <http://localhost:8080/api/health>. A resposta esperada é `OK`.
+
+## Modelo de domínio atual
+
+Na Aula 03, o projeto passou a representar grupos e produtos em memória:
+
+```text
+GrupoProduto 1 ─────── N Produto
+```
+
+As classes estão no pacote `com.curso.suporteos.domain` e não dependem de Spring ou JPA. As regras de criação, movimentação de estoque, associação e cálculo monetário são verificadas por testes unitários.
 
 ## Executando os testes
 
