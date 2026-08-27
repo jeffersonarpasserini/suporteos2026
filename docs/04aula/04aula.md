@@ -838,21 +838,21 @@ class PersistenciaJpaTest {
 
 `flush()` força a sincronização com o banco; `clear()` remove os objetos do contexto para impedir que o teste apenas releia a mesma instância em memória. `@Transactional` desfaz os dados do teste ao final, mas a estrutura criada pelo Liquibase permanece.
 
-Execute informando a senha de teste:
+Como o carregamento do `.env` já foi configurado nesta aula, execute os testes sem repetir a senha no terminal:
 
 macOS ou Linux:
 
 ```bash
-export DB_TEST_PASSWORD='sua_senha_local'
 ./mvnw test
 ```
 
 PowerShell:
 
 ```powershell
-$env:DB_TEST_PASSWORD = "sua_senha_local"
 .\mvnw.cmd test
 ```
+
+Em integração contínua, onde o arquivo `.env` não deve existir, `DB_TEST_PASSWORD` será configurada como segredo do ambiente de execução.
 
 Resultado de referência da Aula 04:
 
@@ -904,7 +904,7 @@ Nesta aula escrevemos os changelogs manualmente para compreender tabela, tipo, c
 Essa aula deverá comparar dois mecanismos:
 
 1. `generate-changelog`, que lê a estrutura de um banco existente;
-2. `diff-changelog`/`mvn liquibase:diff` com a extensão Hibernate, que compara o metamodelo das classes JPA com o PostgreSQL.
+2. `diff-changelog`/`mvn liquibase:diff`, que compara uma estrutura de referência gerada a partir das classes JPA com o PostgreSQL versionado.
 
 O fluxo esperado será:
 
@@ -926,7 +926,7 @@ incorporar a migração revisada ao changelog mestre
 
 O arquivo gerado nunca será aceito automaticamente como versão final. A ferramenta identifica diferenças estruturais, mas não conhece toda a intenção de negócio, a estratégia para dados existentes nem se um rollback é seguro.
 
-Antes dessa aula, o professor deverá validar a compatibilidade da extensão `liquibase-hibernate` com as versões de Spring Boot e Hibernate usadas no semestre. Na versão atual deste projeto, o Hibernate é 7.x, enquanto a integração comunitária oficial documenta explicitamente a extensão para Hibernate 6.x.
+A Aula 06 implementa esse processo. Como a comparação direta pela extensão Hibernate apresenta limitação com a versão usada no projeto, o fluxo didático gera um PostgreSQL de referência descartável a partir das entidades e compara dois bancos PostgreSQL reais. O rascunho continua sendo produzido automaticamente a partir das classes, mas por um caminho reproduzível e passível de inspeção.
 
 ## 18. Diagnóstico orientado por evidências
 

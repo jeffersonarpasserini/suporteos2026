@@ -28,6 +28,8 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<liquibase.version>5.0.3</liquibase.version>
+		<liquibase.changelog.file>src/main/resources/db/changelog/db.changelog-master.yaml</liquibase.changelog.file>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -80,6 +82,28 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.liquibase</groupId>
+				<artifactId>liquibase-maven-plugin</artifactId>
+				<version>${liquibase.version}</version>
+				<configuration>
+					<changeLogFile>${liquibase.changelog.file}</changeLogFile>
+					<referenceUrl>${env.DB_REFERENCE_URL}</referenceUrl>
+					<referenceUsername>${env.DB_REFERENCE_USERNAME}</referenceUsername>
+					<referencePassword>${env.DB_REFERENCE_PASSWORD}</referencePassword>
+					<url>${env.DB_DIFF_URL}</url>
+					<username>${env.DB_DIFF_USERNAME}</username>
+					<password>${env.DB_DIFF_PASSWORD}</password>
+					<diffChangeLogFile>${project.build.directory}/liquibase-diff/changelog-gerado.yaml</diffChangeLogFile>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.postgresql</groupId>
+						<artifactId>postgresql</artifactId>
+						<version>${postgresql.version}</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 		</plugins>
 	</build>

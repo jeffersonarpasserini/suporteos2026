@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: src/main/resources/db/changelog/changes/001-create-grupo-produto.yaml
+  - include:
+      file: src/main/resources/db/changelog/changes/002-create-produto.yaml

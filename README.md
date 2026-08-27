@@ -27,6 +27,9 @@ O sistema será construído incrementalmente. Cada aula termina em um estado exe
 | 02 | Criação do projeto e definição do tema | [Abrir Aula 02](docs/02aula/02aula.md) |
 | 03 | Modelagem de domínio com Java puro | [Abrir Aula 03](docs/03aula/03aula.md) |
 | 04 | Persistência com JPA, PostgreSQL, profiles e Liquibase | [Abrir Aula 04](docs/04aula/04aula.md) |
+| 05 | Spring Data JPA, repositories, serviços e transações | [Abrir Aula 05](docs/05aula/05aula.md) |
+| 06 | Evolução do modelo e geração assistida de changelogs | [Abrir Aula 06](docs/06aula/06aula.md) |
+| 07 | API REST, DTOs, mapeadores e testes com Postman | [Abrir Aula 07](docs/07aula/07aula.md) |
 
 ## Organização pedagógica
 
@@ -63,17 +66,28 @@ Com a aplicação iniciada, acesse <http://localhost:8080/api/health>. A respost
 
 ## Modelo de domínio atual
 
-Na Aula 04, o modelo de grupos e produtos passou a ser persistido no PostgreSQL:
+Na Aula 06, o modelo passou a representar grupos, produtos e fornecedores:
 
 ```text
 GrupoProduto 1 ─────── N Produto
+Fornecedor   1 ─────── N Produto
 ```
 
-As classes estão no pacote `com.curso.suporteos.domain`, são mapeadas com JPA e preservam as regras de negócio da Aula 03. O Liquibase cria e versiona o esquema; o Hibernate apenas o valida. Os profiles `dev`, `test` e `prod` usam PostgreSQL, sem H2.
+O fornecedor de um produto é opcional. As classes estão no pacote `com.curso.suporteos.domain`, são mapeadas com JPA e preservam as regras de negócio. O Liquibase cria e versiona o esquema; o Hibernate apenas o valida. Os profiles `dev`, `test` e `prod` usam PostgreSQL, sem H2.
+
+## API atual
+
+Após iniciar a aplicação, estão disponíveis os cadastros, consultas por ID e listagens de:
+
+- `http://localhost:8080/api/grupos-produtos`;
+- `http://localhost:8080/api/fornecedores`;
+- `http://localhost:8080/api/produtos`.
+
+Os contratos usam DTOs, validação de entrada e respostas de erro padronizadas. A [Aula 07](docs/07aula/07aula.md) contém um laboratório completo de testes com Postman.
 
 ## Executando os testes
 
-Os testes da Aula 04 acessam `suporteos2026_test` e leem `DB_TEST_PASSWORD` do `.env` local ou das variáveis do ambiente de execução.
+Os testes de persistência acessam `suporteos2026_test` e leem `DB_TEST_PASSWORD` do `.env` local ou das variáveis do ambiente de execução. Os testes unitários e da camada web não dependem de uma porta HTTP aberta.
 
 No Windows:
 

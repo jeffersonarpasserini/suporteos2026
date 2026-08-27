@@ -3,3 +3,5 @@ databaseChangeLog:
       file: db/changelog/changes/001-create-grupo-produto.yaml
   - include:
       file: db/changelog/changes/002-create-produto.yaml
+  - include:
+      file: db/changelog/changes/003-fornecedor-e-estoque-minimo.yaml

@@ -60,7 +60,7 @@ class PersistenciaJpaTest {
                 "SELECT COUNT(*) FROM databasechangelog",
                 Integer.class);
 
-        assertEquals(8, quantidade);
+        assertEquals(17, quantidade);
     }
 
     @Test
@@ -119,11 +119,12 @@ class PersistenciaJpaTest {
                     descricao,
                     saldo_estoque,
                     valor_unitario,
+                    estoque_minimo,
                     data_cadastro,
                     status,
                     grupo_produto_id
                 )
-                VALUES (?, ?, CAST(? AS NUMERIC), CAST(? AS NUMERIC), DATE '2026-03-10', 'ATIVO', ?)
+                VALUES (?, ?, CAST(? AS NUMERIC), CAST(? AS NUMERIC), 0, DATE '2026-03-10', 'ATIVO', ?)
                 """,
                 codigoBarras,
                 descricao,
