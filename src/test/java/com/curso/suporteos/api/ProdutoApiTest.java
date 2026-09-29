@@ -49,7 +49,7 @@ class ProdutoApiTest {
         GrupoProduto grupo = grupoRepository.save(new GrupoProduto("Grupo API"));
         Fornecedor fornecedor = fornecedorRepository.save(new Fornecedor(
                 "Fornecedor API",
-                "22222222000192"));
+                "11222333000181"));
 
         String json = """
                 {
@@ -98,7 +98,7 @@ class ProdutoApiTest {
         GrupoProduto grupo = grupoRepository.save(new GrupoProduto("Grupo formulário"));
         Fornecedor fornecedor = fornecedorRepository.save(new Fornecedor(
                 "Fornecedor formulário",
-                "33333333000193"));
+                "11444777000161"));
         Produto produto = new Produto(
                 "API-FORMULARIO-001",
                 "Produto para alteração",

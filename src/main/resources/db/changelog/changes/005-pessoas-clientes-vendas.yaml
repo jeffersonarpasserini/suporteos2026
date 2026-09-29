@@ -1,0 +1,364 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-01-create-pessoa
+      author: curso-spring-2026
+      comment: Centraliza a identidade civil compartilhada por clientes e colaboradores.
+      changes:
+        - createTable:
+            tableName: pessoa
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_pessoa
+                    nullable: false
+              - column:
+                  name: nome
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(180)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: cpf
+                  type: VARCHAR(11)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: data_cadastro
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: pessoa
+
+  - changeSet:
+      id: 005-02-unique-email-pessoa
+      author: curso-spring-2026
+      comment: Impede e-mails duplicados ignorando espaços laterais e maiúsculas.
+      changes:
+        - sql:
+            sql: >
+              CREATE UNIQUE INDEX uk_pessoa_email_lower
+              ON pessoa (LOWER(BTRIM(email)))
+      rollback:
+        - sql:
+            sql: DROP INDEX uk_pessoa_email_lower
+
+  - changeSet:
+      id: 005-03-unique-cpf-pessoa
+      author: curso-spring-2026
+      changes:
+        - addUniqueConstraint:
+            tableName: pessoa
+            columnNames: cpf
+            constraintName: uk_pessoa_cpf
+      rollback:
+        - dropUniqueConstraint:
+            tableName: pessoa
+            constraintName: uk_pessoa_cpf
+
+  - changeSet:
+      id: 005-04-check-pessoa
+      author: curso-spring-2026
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE pessoa
+              ADD CONSTRAINT ck_pessoa_status
+              CHECK (status IN ('ATIVO', 'INATIVO'))
+        - sql:
+            sql: >
+              ALTER TABLE pessoa
+              ADD CONSTRAINT ck_pessoa_cpf_formato
+              CHECK (cpf ~ '^[0-9]{11}$')
+      rollback:
+        - sql:
+            sql: ALTER TABLE pessoa DROP CONSTRAINT ck_pessoa_cpf_formato
+        - sql:
+            sql: ALTER TABLE pessoa DROP CONSTRAINT ck_pessoa_status
+
+  - changeSet:
+      id: 005-05-create-cliente
+      author: curso-spring-2026
+      changes:
+        - createTable:
+            tableName: cliente
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_cliente
+                    nullable: false
+              - column:
+                  name: pessoa_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_cliente_pessoa
+              - column:
+                  name: telefone
+                  type: VARCHAR(30)
+      rollback:
+        - dropTable:
+            tableName: cliente
+
+  - changeSet:
+      id: 005-06-fk-cliente-pessoa
+      author: curso-spring-2026
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: cliente
+            baseColumnNames: pessoa_id
+            referencedTableName: pessoa
+            referencedColumnNames: id
+            constraintName: fk_cliente_pessoa
+            onDelete: RESTRICT
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: cliente
+            constraintName: fk_cliente_pessoa
+
+  - changeSet:
+      id: 005-07-create-colaborador
+      author: curso-spring-2026
+      changes:
+        - createTable:
+            tableName: colaborador
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_colaborador
+                    nullable: false
+              - column:
+                  name: pessoa_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_colaborador_pessoa
+              - column:
+                  name: matricula
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_colaborador_matricula
+              - column:
+                  name: funcao
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: data_admissao
+                  type: DATE
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: colaborador
+
+  - changeSet:
+      id: 005-08-constraints-colaborador
+      author: curso-spring-2026
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: colaborador
+            baseColumnNames: pessoa_id
+            referencedTableName: pessoa
+            referencedColumnNames: id
+            constraintName: fk_colaborador_pessoa
+            onDelete: RESTRICT
+        - sql:
+            sql: >
+              ALTER TABLE colaborador
+              ADD CONSTRAINT ck_colaborador_funcao
+              CHECK (funcao IN ('VENDEDOR', 'ESTOQUISTA', 'GERENTE', 'ADMINISTRATIVO'))
+      rollback:
+        - sql:
+            sql: ALTER TABLE colaborador DROP CONSTRAINT ck_colaborador_funcao
+        - dropForeignKeyConstraint:
+            baseTableName: colaborador
+            constraintName: fk_colaborador_pessoa
+
+  - changeSet:
+      id: 005-09-create-venda
+      author: curso-spring-2026
+      changes:
+        - createTable:
+            tableName: venda
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_venda
+                    nullable: false
+              - column:
+                  name: cliente_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: vendedor_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: data_venda
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: venda
+
+  - changeSet:
+      id: 005-10-constraints-venda
+      author: curso-spring-2026
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: venda
+            baseColumnNames: cliente_id
+            referencedTableName: cliente
+            referencedColumnNames: id
+            constraintName: fk_venda_cliente
+            onDelete: RESTRICT
+        - addForeignKeyConstraint:
+            baseTableName: venda
+            baseColumnNames: vendedor_id
+            referencedTableName: colaborador
+            referencedColumnNames: id
+            constraintName: fk_venda_colaborador
+            onDelete: RESTRICT
+        - sql:
+            sql: >
+              ALTER TABLE venda
+              ADD CONSTRAINT ck_venda_status
+              CHECK (status IN ('ABERTA', 'FINALIZADA', 'CANCELADA'))
+      rollback:
+        - sql:
+            sql: ALTER TABLE venda DROP CONSTRAINT ck_venda_status
+        - dropForeignKeyConstraint:
+            baseTableName: venda
+            constraintName: fk_venda_colaborador
+        - dropForeignKeyConstraint:
+            baseTableName: venda
+            constraintName: fk_venda_cliente
+
+  - changeSet:
+      id: 005-11-create-item-venda
+      author: curso-spring-2026
+      comment: Resolve a relação muitos-para-muitos e preserva quantidade e preço praticado.
+      changes:
+        - createTable:
+            tableName: item_venda
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_item_venda
+                    nullable: false
+              - column:
+                  name: venda_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: produto_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quantidade
+                  type: NUMERIC(18,3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: valor_unitario
+                  type: NUMERIC(18,2)
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: item_venda
+            columnNames: venda_id, produto_id
+            constraintName: uk_item_venda_produto
+      rollback:
+        - dropTable:
+            tableName: item_venda
+
+  - changeSet:
+      id: 005-12-fks-item-venda
+      author: curso-spring-2026
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: item_venda
+            baseColumnNames: venda_id
+            referencedTableName: venda
+            referencedColumnNames: id
+            constraintName: fk_item_venda_venda
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: item_venda
+            baseColumnNames: produto_id
+            referencedTableName: produto
+            referencedColumnNames: id
+            constraintName: fk_item_venda_produto
+            onDelete: RESTRICT
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: item_venda
+            constraintName: fk_item_venda_produto
+        - dropForeignKeyConstraint:
+            baseTableName: item_venda
+            constraintName: fk_item_venda_venda
+
+  - changeSet:
+      id: 005-13-checks-item-venda
+      author: curso-spring-2026
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE item_venda
+              ADD CONSTRAINT ck_item_venda_quantidade
+              CHECK (quantidade > 0)
+        - sql:
+            sql: >
+              ALTER TABLE item_venda
+              ADD CONSTRAINT ck_item_venda_valor_unitario
+              CHECK (valor_unitario >= 0)
+      rollback:
+        - sql:
+            sql: ALTER TABLE item_venda DROP CONSTRAINT ck_item_venda_valor_unitario
+        - sql:
+            sql: ALTER TABLE item_venda DROP CONSTRAINT ck_item_venda_quantidade

@@ -40,7 +40,13 @@ class OpenApiDocumentationTest {
                         .exists())
                 .andExpect(jsonPath("$.paths['/api/produtos/{id}/estoque/saidas'].post")
                         .exists())
+                .andExpect(jsonPath("$.paths['/api/pessoas'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/clientes/{id}'].get").exists())
+                .andExpect(jsonPath("$.paths['/api/colaboradores'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/vendas/{id}/itens'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/vendas/{id}/finalizacao'].post").exists())
                 .andExpect(jsonPath("$.components.schemas.ProdutoResponse").exists())
+                .andExpect(jsonPath("$.components.schemas.VendaResponse").exists())
                 .andExpect(jsonPath("$.components.schemas.ApiError").exists());
     }
 }

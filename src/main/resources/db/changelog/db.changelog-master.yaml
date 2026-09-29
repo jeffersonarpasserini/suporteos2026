@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/changes/003-fornecedor-e-estoque-minimo.yaml
   - include:
       file: db/changelog/changes/004-unique-nome-grupo-produto.yaml
+  - include:
+      file: db/changelog/changes/005-pessoas-clientes-vendas.yaml

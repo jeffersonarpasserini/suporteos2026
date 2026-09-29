@@ -4,7 +4,7 @@
 
 - Nome: `suporteos2026`
 - Tema: controle simplificado de itens de estoque
-- Objetivo: cadastrar produtos e organizá-los por grupos de produtos
+- Objetivo: controlar produtos, fornecedores, pessoas, clientes, colaboradores e vendas
 
 ## Entidade de classificação
 
@@ -30,6 +30,14 @@
 
 - Um grupo de produtos pode classificar vários produtos.
 - Cada produto pertence a um grupo de produtos.
+- Um fornecedor identificado por CNPJ pode fornecer vários produtos.
+- Uma pessoa identificada por CPF pode assumir os papéis de cliente e colaborador.
+- Uma venda pertence a um cliente, registra o colaborador vendedor e contém itens.
+- Cada item liga a venda ao produto e preserva quantidade e preço praticado.
+
+## Evolução comercial da Aula 10
+
+O modelo usa composição: `Cliente` e `Colaborador` referenciam `Pessoa`, mas não herdam dela. Assim, a mesma identidade pode assumir os dois papéis sem duplicar CPF, nome e e-mail. A futura conta de acesso também poderá referenciar `Pessoa`, mantendo credenciais e permissões separadas das funções de negócio.
 
 ## Exemplos
 

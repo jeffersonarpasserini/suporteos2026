@@ -15,8 +15,8 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Suporte OS API")
-                        .description("API didática para cadastro de produtos, grupos, fornecedores "
-                                + "e movimentações de estoque.")
+                        .description("API didática para produtos, fornecedores, pessoas, clientes, "
+                                + "colaboradores, vendas e movimentações de estoque.")
                         .version("1.0.0")
                         .contact(new Contact()
                                 .name("Curso de Spring Boot 2026")))

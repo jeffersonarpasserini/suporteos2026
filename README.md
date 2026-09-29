@@ -32,13 +32,14 @@ O sistema será construído incrementalmente. Cada aula termina em um estado exe
 | 07 | API REST, DTOs, mapeadores e testes com Postman | [Abrir Aula 07](docs/07aula/07aula.md) |
 | 08 | CRUD completo, estoque, filtros e paginação | [Abrir Aula 08](docs/08aula/08aula.md) |
 | 09 | OpenAPI: contrato executável e documentação da API | [Abrir Aula 09](docs/09aula/09aula.md) |
+| 10 | Pessoas, clientes, colaboradores, fornecedores e vendas | [Abrir Aula 10](docs/10aula/10aula.md) |
 
 ## Organização pedagógica
 
 As aulas combinam fundamentação conceitual, implementação incremental, evidências de execução, diagnóstico, atividade de transferência e avaliação. O material não deve apresentar código ou configuração como uma sequência isolada de procedimentos.
 
 - [Padrão pedagógico obrigatório das aulas](docs/PADRAO-PEDAGOGICO.md)
-- [Revisão pedagógica e acompanhamento das Aulas 00 a 09](docs/REVISAO-PEDAGOGICA-AULAS-00-09.md)
+- [Revisão pedagógica e acompanhamento das Aulas 00 a 10](docs/REVISAO-PEDAGOGICA-AULAS-00-10.md)
 
 ## Projeto de referência
 
@@ -68,14 +69,19 @@ Com a aplicação iniciada, acesse <http://localhost:8080/api/health>. A respost
 
 ## Modelo de domínio atual
 
-Na Aula 06, o modelo passou a representar grupos, produtos e fornecedores:
+Na Aula 10, o modelo passou a representar também pessoas, papéis comerciais e vendas:
 
 ```text
 GrupoProduto 1 ─────── N Produto
 Fornecedor   1 ─────── N Produto
+Pessoa       1 ───── 0..1 Cliente
+Pessoa       1 ───── 0..1 Colaborador
+Cliente      1 ─────── N Venda
+Colaborador  1 ─────── N Venda
+Venda        1 ─────── N ItemVenda N ─────── 1 Produto
 ```
 
-O fornecedor de um produto é opcional. As classes estão no pacote `com.curso.suporteos.domain`, são mapeadas com JPA e preservam as regras de negócio. O Liquibase cria e versiona o esquema; o Hibernate apenas o valida. Os profiles `dev`, `test` e `prod` usam PostgreSQL, sem H2.
+O fornecedor de um produto é opcional e possui CNPJ validado pelos dígitos verificadores. CPF pertence a `Pessoa`; `Cliente` e `Colaborador` são papéis por composição, sem herança. `ItemVenda` preserva quantidade e preço histórico. As classes estão no pacote `com.curso.suporteos.domain`, são mapeadas com JPA e preservam as regras de negócio. O Liquibase cria e versiona o esquema; o Hibernate apenas o valida. Os profiles `dev`, `test` e `prod` usam PostgreSQL, sem H2.
 
 ## API atual
 
@@ -83,11 +89,17 @@ Após iniciar a aplicação, estão disponíveis os cadastros, consultas por ID 
 
 - `http://localhost:8080/api/grupos-produtos`;
 - `http://localhost:8080/api/fornecedores`;
-- `http://localhost:8080/api/produtos`.
+- `http://localhost:8080/api/produtos`;
+- `http://localhost:8080/api/pessoas`;
+- `http://localhost:8080/api/clientes`;
+- `http://localhost:8080/api/colaboradores`;
+- `http://localhost:8080/api/vendas`.
 
 Os contratos usam DTOs, validação de entrada e respostas de erro padronizadas. A [Aula 07](docs/07aula/07aula.md) contém um laboratório completo de testes com Postman. A [Aula 08](docs/08aula/08aula.md) acrescenta alteração, exclusão, status, movimentações de estoque, filtros, ordenação e paginação para grupos e produtos.
 
 A [Aula 09](docs/09aula/09aula.md) publica o contrato OpenAPI em `/v3/api-docs` e `/v3/api-docs.yaml`. Durante o desenvolvimento, a documentação interativa está disponível em `/swagger-ui.html`; no profile `prod`, sua exposição permanece desabilitada por decisão explícita.
+
+A [Aula 10](docs/10aula/10aula.md) evolui o domínio com CPF, CNPJ, papéis compostos, vendas, itens, preço histórico e baixa transacional de estoque, deixando explícita a ligação com uma futura implementação de contas e perfis de acesso.
 
 Para testar todo o fluxo em um cliente externo, importe no Postman a coleção [Suporte OS 2026 - API completa](postman/Suporte-OS.postman_collection.json). Ela usa variáveis próprias, captura automaticamente os identificadores cadastrados e pode ser executada na ordem das pastas pelo Collection Runner.
 

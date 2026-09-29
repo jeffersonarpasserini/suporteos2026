@@ -41,7 +41,7 @@ class ProdutoServiceTest {
         GrupoProduto grupo = grupoRepository.save(new GrupoProduto("Periféricos de teste"));
         Fornecedor fornecedor = fornecedorRepository.save(new Fornecedor(
                 "Fornecedor de teste",
-                "11111111000191"));
+                "11222333000181"));
 
         Produto cadastrado = produtoService.cadastrar(
                 novoProduto("TESTE-SERVICE-001"),

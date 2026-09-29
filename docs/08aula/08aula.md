@@ -105,6 +105,24 @@ O código de barras, o saldo, a data de cadastro e o status não aparecem nesse 
 
 Essa separação impede que um `PUT` genérico contorne regras importantes.
 
+### 1.4 Ordem de construção da aula
+
+Implemente o incremento nesta ordem para que cada falha permaneça localizada:
+
+```text
+1. comportamentos de GrupoProduto e Produto
+2. testes unitários desses comportamentos
+3. migração 004 e teste de integridade
+4. DTOs de alteração, status e estoque
+5. métodos adicionais dos repositories
+6. services de alteração, exclusão, status e movimentação
+7. Specifications, paginação e validação de ordenação
+8. controllers e tratamento de erros
+9. MockMvc, Postman e suíte completa
+```
+
+Não avance automaticamente quando um checkpoint falhar. Registre a evidência, identifique a camada e corrija a causa antes de acrescentar outro componente.
+
 ---
 
 ## 2. Semântica HTTP antes do código
@@ -616,6 +634,64 @@ if (Boolean.TRUE.equals(abaixoEstoqueMinimo)) {
 
 O parâmetro ausente ou `false` não restringe a consulta.
 
+O trecho isolado acima não é suficiente para montar o caso de uso. O método completo de `ProdutoService` fica assim:
+
+```java
+@Transactional(readOnly = true)
+public Page<Produto> pesquisar(
+        String descricao,
+        Status status,
+        Long grupoId,
+        Long fornecedorId,
+        Boolean abaixoEstoqueMinimo,
+        Pageable pageable) {
+    validarOrdenacao(pageable, Set.of(
+            "id", "codigoBarras", "descricao", "saldoEstoque",
+            "valorUnitario", "estoqueMinimo", "dataCadastro", "status"));
+
+    Specification<Produto> filtros =
+            (root, query, cb) -> cb.conjunction();
+
+    if (descricao != null && !descricao.isBlank()) {
+        String trecho = "%" + descricao.trim()
+                .toLowerCase(Locale.ROOT) + "%";
+        filtros = filtros.and((root, query, cb) ->
+                cb.like(cb.lower(root.get("descricao")), trecho));
+    }
+    if (status != null) {
+        filtros = filtros.and((root, query, cb) ->
+                cb.equal(root.get("status"), status));
+    }
+    if (grupoId != null) {
+        filtros = filtros.and((root, query, cb) ->
+                cb.equal(root.get("grupo").get("id"), grupoId));
+    }
+    if (fornecedorId != null) {
+        filtros = filtros.and((root, query, cb) ->
+                cb.equal(root.get("fornecedor").get("id"), fornecedorId));
+    }
+    if (Boolean.TRUE.equals(abaixoEstoqueMinimo)) {
+        filtros = filtros.and((root, query, cb) ->
+                cb.lessThan(root.get("saldoEstoque"),
+                        root.get("estoqueMinimo")));
+    }
+
+    return produtoRepository.findAll(filtros, pageable);
+}
+```
+
+Imports novos desse arquivo:
+
+```java
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import java.util.Locale;
+import java.util.Set;
+```
+
+Compile neste ponto. Erros em `root.get(...)` normalmente só aparecem durante a execução; por isso, além da compilação, o teste de pesquisa precisa iniciar o contexto JPA.
+
 ### 8.3 Por que não filtrar uma lista em Java?
 
 Esta abordagem é inadequada:
@@ -818,7 +894,45 @@ public ProdutoResponse retirarEstoque(
 }
 ```
 
-Crie ainda as rotas de status, exclusão e pesquisa seguindo o mesmo padrão do grupo.
+Crie também as rotas de status, exclusão e pesquisa. As implementações completas estão abaixo.
+
+Para que o aluno não dependa de inferir essas rotas, implemente-as explicitamente em `ProdutoController`:
+
+```java
+@PutMapping("/{id}/status")
+public ProdutoResponse alterarStatus(
+        @PathVariable Long id,
+        @Valid @RequestBody StatusRequest request) {
+    return mapper.toResponse(
+            service.alterarStatus(id, request.status()));
+}
+
+@DeleteMapping("/{id}")
+public ResponseEntity<Void> excluir(@PathVariable Long id) {
+    service.excluir(id);
+    return ResponseEntity.noContent().build();
+}
+
+@GetMapping
+public PaginaResponse<ProdutoResponse> pesquisar(
+        @RequestParam(required = false) String descricao,
+        @RequestParam(required = false) Status status,
+        @RequestParam(required = false) Long grupoId,
+        @RequestParam(required = false) Long fornecedorId,
+        @RequestParam(required = false) Boolean abaixoEstoqueMinimo,
+        @PageableDefault(
+                size = 20,
+                sort = "id",
+                direction = Sort.Direction.ASC)
+        Pageable pageable) {
+    return PaginaResponse.de(
+            service.pesquisar(descricao, status, grupoId, fornecedorId,
+                    abaixoEstoqueMinimo, pageable),
+            mapper::toResponse);
+}
+```
+
+Adicione os imports de `Pageable`, `Sort`, `PageableDefault`, `RequestParam` e `DeleteMapping`. Se o IDE importar `java.awt.print.Pageable`, remova-o: o tipo correto pertence a `org.springframework.data.domain`.
 
 ### 10.5 Carregar a tela de alteração
 
@@ -1012,7 +1126,28 @@ Para grupos, tente primeiro excluir um grupo com produtos e observe o `409`. Exc
 
 ### 13.1 Domínio
 
-Teste:
+Não registre apenas a lista de casos. Implemente primeiro um comportamento completo em `ProdutoTest`:
+
+```java
+@Test
+void deveAlterarDadosEditaveis() {
+    Produto produto = novoProduto("PRODUTO-ALTERACAO");
+    GrupoProduto novoGrupo = new GrupoProduto("Novo grupo");
+
+    produto.alterarDescricao("Descrição alterada");
+    produto.alterarValorUnitario(new BigDecimal("25.90"));
+    produto.alterarEstoqueMinimo(new BigDecimal("3.000"));
+    produto.alterarGrupo(novoGrupo);
+
+    assertEquals("Descrição alterada", produto.getDescricao());
+    assertEquals(new BigDecimal("25.90"), produto.getValorUnitario());
+    assertEquals(new BigDecimal("3.000"), produto.getEstoqueMinimo());
+    assertSame(novoGrupo, produto.getGrupo());
+    assertTrue(novoGrupo.getProdutos().contains(produto));
+}
+```
+
+O teste verifica valores e os dois lados da associação. Depois acrescente, como métodos independentes:
 
 - alteração válida de nome;
 - rejeição de nome em branco;
@@ -1024,19 +1159,55 @@ Teste:
 
 ### 13.2 Persistência
 
-Crie um teste que insira `Papelaria` e tente inserir `PAPELARIA`. O PostgreSQL deve rejeitar o segundo valor por causa do índice funcional.
+Em `PersistenciaJpaTest`, injete `JdbcTemplate` e escreva:
+
+```java
+@Test
+@Transactional
+void bancoDeveImpedirNomeDeGrupoDuplicadoIgnorandoMaiusculas() {
+    jdbcTemplate.update(
+            "INSERT INTO grupo_produto (nome, status) VALUES (?, 'ATIVO')",
+            "Papelaria");
+
+    assertThrows(DataIntegrityViolationException.class, () -> {
+        jdbcTemplate.update(
+                "INSERT INTO grupo_produto (nome, status) VALUES (?, 'ATIVO')",
+                "PAPELARIA");
+    });
+}
+```
+
+Esse teste precisa do PostgreSQL. H2 ou um mock não comprovariam o comportamento do índice funcional `LOWER(BTRIM(nome))`.
 
 Atualize também a quantidade esperada de changeSets para 18.
 
 ### 13.3 MockMvc – alteração e status
 
+Prepare grupo e produto pelo repository para que o teste se concentre no contrato HTTP. Anote a classe com `@SpringBootTest`, `@AutoConfigureMockMvc`, `@ActiveProfiles("test")` e `@Transactional`.
+
 ```java
+String jsonAlteracao = """
+        {
+          "descricao": "Produto alterado",
+          "valorUnitario": 59.90,
+          "estoqueMinimo": 4.000,
+          "grupoId": %d,
+          "fornecedorId": null
+        }
+        """.formatted(grupo.getId());
+
 mockMvc.perform(put("/api/produtos/{id}", produto.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonAlteracao))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.descricao")
                 .value("Produto alterado"));
+
+mockMvc.perform(put("/api/produtos/{id}/status", produto.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"INATIVO\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("INATIVO"));
 ```
 
 ### 13.4 MockMvc – paginação
@@ -1053,7 +1224,26 @@ mockMvc.perform(get("/api/produtos")
         .andExpect(jsonPath("$.tamanho").value(5));
 ```
 
-### 13.5 Casos mínimos da suíte
+O teste deve criar ao menos dois produtos, um compatível e outro incompatível com o filtro. Se houver apenas um registro, o teste pode passar mesmo que o filtro seja ignorado.
+
+### 13.5 Testar o erro sem perder o estado anterior
+
+```java
+mockMvc.perform(post("/api/produtos/{id}/estoque/saidas", produto.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"quantidade\":10.001}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message")
+                .value("Saldo de estoque insuficiente"));
+
+Produto recarregado = produtoRepository.findById(produto.getId())
+        .orElseThrow();
+assertEquals(new BigDecimal("10.000"), recarregado.getSaldoEstoque());
+```
+
+Não basta confirmar o `400`: a evidência precisa mostrar que uma operação rejeitada não alterou o saldo.
+
+### 13.6 Casos mínimos da suíte
 
 - `PUT` válido retorna `200`;
 - `PUT` de ID inexistente retorna `404`;

@@ -1,4 +1,4 @@
-# Revisão pedagógica e acompanhamento — Aulas 00 a 09
+# Revisão pedagógica e acompanhamento — Aulas 00 a 10
 
 [⬅ Voltar para o índice do curso](../README.md)
 
@@ -8,17 +8,17 @@
 
 | Item | Situação |
 |---|---|
-| Escopo | Aulas 00 a 09 |
+| Escopo | Aulas 00 a 10 |
 | Tipo de revisão | Pedagógica, técnica e longitudinal |
 | Última atualização | 29 de setembro de 2026 |
 | Java adotado | Java 21 |
 | Spring Boot adotado | 4.0.7 |
 | Projeto de referência | `suporteos2026` |
-| Estado técnico verificado | 49 testes aprovados no PostgreSQL 16 |
+| Estado técnico verificado | 59 testes aprovados no PostgreSQL 16 |
 
 ## Escopo da revisão
 
-Esta revisão avalia as dez aulas atualmente existentes no curso:
+Esta revisão avalia as onze aulas atualmente existentes no curso:
 
 - Aula 00 — GitHub e início do projeto;
 - Aula 01 — configuração do ambiente;
@@ -29,7 +29,8 @@ Esta revisão avalia as dez aulas atualmente existentes no curso:
 - Aula 06 — evolução do modelo e geração assistida de changelogs;
 - Aula 07 — API REST, DTOs, mapeadores e testes com Postman;
 - Aula 08 — CRUD completo, estoque, filtros e paginação;
-- Aula 09 — OpenAPI, documentação executável e contrato verificável.
+- Aula 09 — OpenAPI, documentação executável e contrato verificável;
+- Aula 10 — pessoas, papéis, documentos fiscais, fornecedores e vendas.
 
 A análise considera:
 
@@ -50,7 +51,7 @@ O [padrão pedagógico do curso](PADRAO-PEDAGOGICO.md) foi usado como referênci
 
 Foram confrontados:
 
-- os materiais Markdown das Aulas 00 a 09;
+- os materiais Markdown das Aulas 00 a 10;
 - o `README.md` e seu índice;
 - a estrutura Maven;
 - as classes de domínio, repositories, services, DTOs e controllers;
@@ -59,7 +60,7 @@ Foram confrontados:
 - a coleção Postman consolidada e suas variáveis de execução;
 - a execução da suíte com PostgreSQL real.
 
-Na verificação técnica mais recente, o Liquibase reconheceu 18 changeSets e a suíte terminou com:
+Na Aula 09, o Liquibase reconhecia 18 changeSets e a suíte terminava com:
 
 ```text
 Tests run: 49
@@ -71,9 +72,19 @@ BUILD SUCCESS
 
 Essa evidência confirma o estado atual do protótipo. Ela não substitui as evidências menores exigidas ao final de cada aula.
 
+Após a implementação da Aula 10, o Liquibase reconheceu 31 changeSets e a suíte completa terminou com:
+
+```text
+Tests run: 59
+Failures: 0
+Errors: 0
+Skipped: 0
+BUILD SUCCESS
+```
+
 ---
 
-## Síntese das Aulas 00 a 09
+## Síntese das Aulas 00 a 10
 
 | Aula | Contexto e teoria | Prática e verificação | Transferência e avaliação | Situação geral |
 |---:|---|---|---|---|
@@ -87,10 +98,11 @@ Essa evidência confirma o estado atual do protótipo. Ela não substitui as evi
 | 07 | REST, DTOs, validação e erros | controllers, MockMvc e Postman | atividade, rubrica, checklist e orientação docente | Atende |
 | 08 | semântica de atualização, exclusão e consulta | PUT, DELETE, estoque, filtros e paginação | atividade, rubrica, checklist e orientação docente | Atende |
 | 09 | contrato explícito e documentação executável | OpenAPI, Swagger UI, schemas e teste do contrato | laboratório, transferência, rubrica e orientação docente | Atende |
+| 10 | composição, N:M com atributos, identidade e atomicidade | CPF/CNPJ, pessoas, papéis, fornecedor, venda, itens e estoque | cenário completo, transferência, rubrica e orientação docente | Atende |
 
 ### Conclusão da síntese
 
-As dez aulas formam uma progressão coerente:
+As onze aulas formam uma progressão coerente:
 
 ```text
 Aula 00: preservar e publicar o trabalho
@@ -112,6 +124,8 @@ Aula 07: expor casos de uso por uma API REST
 Aula 08: completar operações e consultas escaláveis
     ↓
 Aula 09: tornar o contrato explícito, navegável e verificável
+    ↓
+Aula 10: evoluir o domínio comercial com composição e transações
 ```
 
 Cada aula parte de um estado executável e acrescenta uma responsabilidade principal. A sequência evita misturar domínio, persistência, transação e HTTP antes que cada fundamento possa ser observado e testado isoladamente.
@@ -550,6 +564,10 @@ O protótipo associado foi validado por 48 testes no PostgreSQL, abrangendo dom�
 ### Correções pedagógicas incorporadas
 
 - aviso destacado sobre a mudança incompatível de array para `PaginaResponse`;
+- ordem explícita de implementação para localizar falhas por camada;
+- método completo de filtros de produto, com imports e ordenação permitida;
+- implementação explícita das rotas de status, exclusão e pesquisa de produto;
+- exemplos executáveis de testes de domínio, persistência, MockMvc e preservação do saldo após erro;
 - rubrica de quatro níveis;
 - orientações para o professor com divisão sugerida em dois encontros;
 - demonstrações, perguntas, falhas controladas e extensões opcionais.
@@ -611,9 +629,74 @@ O protótipo foi validado com 49 testes no PostgreSQL. O teste adicional consult
 - Swagger UI é tratada como cliente exploratório, não como substituta de MockMvc;
 - o documento gerado é tratado como evidência revisável, não como verdade automática.
 
+### Correções pedagógicas incorporadas
+
+- sequência arquivo por arquivo desde a dependência até o teste do contrato;
+- tags apresentadas para cada controller, sem depender de repetição implícita;
+- matriz completa de operações, sucessos e erros que precisam ser documentados;
+- `ProdutoRequest` apresentado integralmente, com imports e todas as restrições;
+- verificação explícita da exposição nos profiles de desenvolvimento e produção;
+- teste OpenAPI ampliado para `PUT`, `DELETE`, respostas de erro e movimentações.
+
 ### Situação perante o padrão pedagógico
 
 A aula atende ao padrão definido. Há contextualização, resultados observáveis, fundamentos, mapeamento teoria–prática, desenvolvimento incremental, diagnóstico, segurança, transferência, atividades, rubrica, ponto de quebra e orientação docente. A implementação e o material estão alinhados, e a coleção Postman oferece um artefato executável adicional.
+
+---
+
+## Aula 10 — Evolução do domínio comercial
+
+### Finalidade pedagógica observada
+
+A aula amplia o modelo sem antecipar autenticação. O estudante precisa distinguir identidade civil, papel comercial, função profissional e perfil de acesso, escolhendo composição para permitir que uma pessoa seja cliente e colaboradora ao mesmo tempo. O fluxo de venda torna observáveis a relação N:M com atributos, o preço histórico e a atomicidade da baixa de estoque.
+
+### Pontos fortes
+
+- apresenta um problema comercial concreto antes das classes;
+- inclui diagrama de classes completo, com leitura textual acessível;
+- explica herança, substituição e estratégias JPA sem tratá-las como proibidas;
+- justifica composição pelos papéis simultâneos e mutáveis;
+- centraliza CPF em `Pessoa`, evitando duplicação entre papéis;
+- mantém fornecedor separado como pessoa jurídica e valida CNPJ;
+- verifica os dois dígitos de CPF e CNPJ e rejeita sequências repetidas;
+- combina validação de DTO, domínio e restrições estruturais do banco;
+- resolve o N:M por `ItemVenda`, que possui quantidade e preço histórico;
+- modela estados `ABERTA`, `FINALIZADA` e `CANCELADA`;
+- realiza a baixa de todos os itens em uma única transação;
+- testa rollback quando um item intermediário não possui saldo;
+- diferencia listagem resumida de consulta detalhada para preservar paginação;
+- atualiza OpenAPI e coleção Postman;
+- liga o modelo a `ContaAcesso` e `PerfilAcesso` futuros sem criar senha prematuramente;
+- inclui diagnóstico, segurança, transferência, avaliação e orientação docente.
+
+### Alinhamento entre resultado, atividade e evidência
+
+| Resultado pretendido | Atividade | Evidência |
+|---|---|---|
+| comparar herança e composição | analisar papéis simultâneos | diagrama e justificativa |
+| validar documentos | testar casos válidos, DVs errados e repetidos | `DocumentoFiscalTest` e erros HTTP |
+| representar N:M com atributos | implementar `ItemVenda` | quantidade, preço e subtotal persistidos |
+| preservar histórico | alterar preço após incluir item | total da venda permanece igual |
+| garantir atomicidade | provocar insuficiência no segundo item | saldos e status preservados por rollback |
+| publicar o incremento | atualizar controllers, OpenAPI e Postman | contrato navegável e coleção importável |
+| preparar segurança futura | separar função e perfil | modelo de extensão sem credenciais atuais |
+
+### Simplificações declaradas
+
+- não há estorno de venda finalizada; somente venda aberta pode ser cancelada;
+- não há desconto, pagamento ou tributação;
+- validação fiscal confirma os dígitos, não existência ou titularidade;
+- transação garante atomicidade, mas locking concorrente permanece para aula futura;
+- exclusão física de pessoas e vendas não é exposta, preservando o histórico;
+- autenticação e autorização continuam deliberadamente fora do escopo.
+
+### Evidência de execução
+
+O PostgreSQL 16 aplicou os 13 novos changeSets, totalizando 31. A suíte aprovou 59 testes, incluindo verificação dos dígitos de CPF/CNPJ no domínio e na API, preço histórico, estados da venda, rollback transacional, mapeamentos JPA e novas rotas no documento OpenAPI.
+
+### Situação perante o padrão pedagógico
+
+A aula atende ao padrão editorial: problema, resultados, pré-requisitos, fundamentos, diagrama, teoria–prática, implementação incremental, verificação, diagnóstico, segurança, transferência, atividades, questões, rubrica, checklist e orientação docente estão presentes. A suíte e a migração foram validadas no PostgreSQL real.
 
 ---
 
@@ -642,6 +725,9 @@ A revisão inicial registrava conteúdos que deveriam aparecer nas aulas futuras
 | segurança | segredos, validação e menor privilégio | Parcialmente atendido de forma transversal |
 | autenticação e autorização | identidade do usuário e controle de acesso | Ainda não abordado |
 | OpenAPI | contrato executável e documentação da API | Atendido na Aula 09 |
+| domínio comercial | clientes, colaboradores, vendas e itens | Atendido na Aula 10 |
+| documentos fiscais | formato, dígitos verificadores e limites | Atendido na Aula 10 |
+| composição versus herança | papéis simultâneos e evolução do modelo | Atendido na Aula 10 |
 | Docker como conteúdo | imagem, contêiner, rede e volume | Usado como infraestrutura; aula própria ainda pendente |
 | implantação | artefato, configuração, observabilidade e entrega | Ainda não abordado |
 
@@ -661,7 +747,7 @@ As limitações registradas na Aula 02 foram retomadas da seguinte forma:
 
 ---
 
-## Coerência da progressão até a Aula 09
+## Coerência da progressão até a Aula 10
 
 | Aula | Incremento principal | Dependência conceitual anterior |
 |---:|---|---|
@@ -675,6 +761,7 @@ As limitações registradas na Aula 02 foram retomadas da seguinte forma:
 | 07 | API REST, DTOs, erros e MockMvc | casos de uso transacionais |
 | 08 | atualização, exclusão, estoque e consultas paginadas | contrato REST básico |
 | 09 | OpenAPI, Swagger UI e teste do contrato | API com operações e representações estáveis |
+| 10 | pessoas, papéis, documentos fiscais, vendas e itens | contrato explícito e domínio transacional existente |
 
 A progressão preserva uma decisão pedagógica consistente: cada aula introduz uma camada ou problema novo sobre um estado executável já compreendido.
 
@@ -685,7 +772,7 @@ A progressão preserva uma decisão pedagógica consistente: cada aula introduz 
 ### Prioridade alta
 
 1. **Segurança concorrente do estoque:** abordar perda de atualização e locking antes de uso multiusuário real.
-2. **Evolução do domínio comercial:** introduzir clientes, colaboradores, vendas e itens de venda preservando coesão, histórico de preços e atomicidade.
+2. **Segurança futura sem acoplamento:** introduzir conta, credenciais e perfis sobre a identidade já modelada, sem confundir função profissional com autorização.
 
 ### Prioridade média
 
@@ -724,9 +811,9 @@ A progressão preserva uma decisão pedagógica consistente: cada aula introduz 
 
 As Aulas 00 a 02 atendem ao papel de fundação do curso. Elas não se limitam a procedimentos: apresentam modelos mentais, exigem evidências, incluem diagnóstico e preparam a transferência para um domínio escolhido pelo estudante.
 
-As Aulas 03 a 09 concretizam a progressão anunciada: domínio, persistência, transações, evolução de esquema, API REST, operações completas, consultas paginadas e documentação executável. A implementação acompanha a documentação e foi validada no PostgreSQL por testes de domínio, aplicação, persistência, HTTP e contrato OpenAPI.
+As Aulas 03 a 10 concretizam a progressão anunciada: domínio, persistência, transações, evolução de esquema, API REST, operações completas, consultas paginadas, documentação executável e evolução comercial por composição. A implementação acompanha a documentação e possui testes de domínio, aplicação, persistência, HTTP e contrato OpenAPI.
 
-O material pode ser utilizado como base da oferta de 2026. As Aulas 00 a 09 atendem de forma consistente ao padrão definido, preservadas as melhorias futuras registradas neste documento. Os próximos passos coerentes são a evolução do domínio comercial, a segurança concorrente do estoque, Docker como objeto de estudo, observabilidade e implantação. Autenticação e autorização permanecem deliberadamente fora do escopo imediato.
+O material pode ser utilizado como base da oferta de 2026. As Aulas 00 a 10 atendem de forma consistente ao padrão definido, preservadas as melhorias futuras registradas neste documento. Os próximos passos coerentes são segurança concorrente do estoque, contas e autorização em momento apropriado, Docker como objeto de estudo, observabilidade e implantação. Autenticação e autorização permanecem deliberadamente fora do escopo da Aula 10.
 
 ---
 

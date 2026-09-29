@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "0a09c5d0-9f63-4b31-9eef-202609290009",
     "name": "Suporte OS 2026 - API completa",
-    "description": "Coleção executável das APIs desenvolvidas até a Aula 09. Execute as pastas na ordem apresentada. Os IDs criados são armazenados automaticamente em variáveis da coleção. Não contém credenciais.",
+    "description": "Coleção executável das APIs desenvolvidas até a Aula 10. Execute as pastas na ordem apresentada. Os IDs criados são armazenados automaticamente em variáveis da coleção. Não contém credenciais.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -38,6 +38,36 @@
     },
     {
       "key": "produtoCodigo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pessoaClienteId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clienteId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pessoaColaboradorId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "colaboradorId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vendaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "itemVendaId",
       "value": "",
       "type": "string"
     }
@@ -206,7 +236,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.collectionVariables.set('fornecedorCnpj', String(Date.now()).slice(-13) + '0');"
+                  "function digito(base) { let peso = base.length - 7; let soma = 0; for (const c of base) { soma += Number(c) * peso--; if (peso === 1) peso = 9; } const resto = soma % 11; return resto < 2 ? 0 : 11 - resto; }",
+                  "let base = String(Date.now()).slice(-12); if ([...base].every(c => c === base[0])) base = '123456780001';",
+                  "pm.collectionVariables.set('fornecedorCnpj', base + digito(base) + digito(base + digito(base)));"
                 ]
               }
             },
@@ -873,11 +905,169 @@
       ]
     },
     {
-      "name": "08 - Limpeza",
-      "description": "Remove primeiro o produto e depois o grupo para respeitar a integridade referencial. O fornecedor permanece cadastrado porque a API atual não possui DELETE para esse recurso.",
+      "name": "08 - Pessoas, clientes, colaboradores e vendas",
+      "description": "Exercita a composição de papéis, CPF, a relação Venda-Item-Produto e a baixa transacional de estoque.",
       "item": [
         {
-          "name": "Excluir produto",
+          "name": "Cadastrar pessoa do cliente",
+          "event": [
+            { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+              "function cpf(base) { function dv(s, peso) { let soma = 0; for (const c of s) soma += Number(c) * peso--; const r = soma % 11; return r < 2 ? 0 : 11 - r; } const d1 = dv(base, 10); return base + d1 + dv(base + d1, 11); }",
+              "let base = String(Date.now()).slice(-9); if ([...base].every(c => c === base[0])) base = '123456789';",
+              "pm.collectionVariables.set('cpfCliente', cpf(base));"
+            ]}},
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('Pessoa cliente criada', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('pessoaClienteId', pm.response.json().id);"
+            ]}}
+          ],
+          "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}],
+            "body": {"mode":"raw","raw":"{\n  \"nome\": \"Cliente Postman\",\n  \"email\": \"cliente.{{$timestamp}}@example.com\",\n  \"cpf\": \"{{cpfCliente}}\"\n}","options":{"raw":{"language":"json"}}},
+            "url": "{{baseUrl}}/api/pessoas" }
+        },
+        {
+          "name": "Consultar pessoa por ID",
+          "request": {"method":"GET","header":[],"url":"{{baseUrl}}/api/pessoas/{{pessoaClienteId}}"},
+          "event": [{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Pessoa encontrada', () => pm.response.to.have.status(200));"]}}]
+        },
+        {
+          "name": "Pesquisar pessoas",
+          "request": {"method":"GET","header":[],"url":"{{baseUrl}}/api/pessoas?nome=Postman&cpf={{cpfCliente}}&status=ATIVO&page=0&size=20&sort=id,asc"}
+        },
+        {
+          "name": "Alterar pessoa com PUT",
+          "request": {"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\n  \"nome\": \"Cliente Postman Alterado\",\n  \"email\": \"cliente.{{$timestamp}}@example.com\",\n  \"cpf\": \"{{cpfCliente}}\"\n}","options":{"raw":{"language":"json"}}},
+            "url":"{{baseUrl}}/api/pessoas/{{pessoaClienteId}}"},
+          "event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Pessoa alterada', () => pm.response.to.have.status(200));"]}}]
+        },
+        {
+          "name": "Cadastrar cliente",
+          "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\n  \"pessoaId\": {{pessoaClienteId}},\n  \"telefone\": \"(11) 99999-0000\"\n}","options":{"raw":{"language":"json"}}},
+            "url":"{{baseUrl}}/api/clientes"},
+          "event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Cliente criado', () => pm.response.to.have.status(201));","pm.collectionVariables.set('clienteId', pm.response.json().id);"]}}]
+        },
+        {
+          "name": "Alterar cliente com PUT",
+          "request": {"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\n  \"telefone\": \"(11) 98888-0000\"\n}","options":{"raw":{"language":"json"}}},
+            "url":"{{baseUrl}}/api/clientes/{{clienteId}}"}
+        },
+        {
+          "name": "Consultar cliente por ID",
+          "request": {"method":"GET","header":[],"url":"{{baseUrl}}/api/clientes/{{clienteId}}"}
+        },
+        {
+          "name": "Pesquisar clientes",
+          "request": {"method":"GET","header":[],"url":"{{baseUrl}}/api/clientes?nome=Postman&status=ATIVO&page=0&size=20&sort=id,asc"}
+        },
+        {
+          "name": "Cadastrar pessoa do colaborador",
+          "event": [
+            { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+              "function cpf(base) { function dv(s, peso) { let soma = 0; for (const c of s) soma += Number(c) * peso--; const r = soma % 11; return r < 2 ? 0 : 11 - r; } const d1 = dv(base, 10); return base + d1 + dv(base + d1, 11); }",
+              "let base = String(Date.now() + 7).slice(-9); if ([...base].every(c => c === base[0])) base = '123456789';",
+              "pm.collectionVariables.set('cpfColaborador', cpf(base));"
+            ]}},
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('Pessoa colaborador criada', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('pessoaColaboradorId', pm.response.json().id);"
+            ]}}
+          ],
+          "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}],
+            "body": {"mode":"raw","raw":"{\n  \"nome\": \"Vendedor Postman\",\n  \"email\": \"vendedor.{{$timestamp}}@example.com\",\n  \"cpf\": \"{{cpfColaborador}}\"\n}","options":{"raw":{"language":"json"}}},
+            "url": "{{baseUrl}}/api/pessoas" }
+        },
+        {
+          "name": "Cadastrar colaborador vendedor",
+          "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\n  \"pessoaId\": {{pessoaColaboradorId}},\n  \"matricula\": \"VEN-{{$timestamp}}\",\n  \"funcao\": \"VENDEDOR\",\n  \"dataAdmissao\": \"2026-09-29\"\n}","options":{"raw":{"language":"json"}}},
+            "url":"{{baseUrl}}/api/colaboradores"},
+          "event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Colaborador criado', () => pm.response.to.have.status(201));","pm.collectionVariables.set('colaboradorId', pm.response.json().id);","pm.collectionVariables.set('matriculaColaborador', pm.response.json().matricula);"]}}]
+        },
+        {
+          "name": "Consultar colaborador por ID",
+          "request": {"method":"GET","header":[],"url":"{{baseUrl}}/api/colaboradores/{{colaboradorId}}"}
+        },
+        {
+          "name": "Alterar colaborador com PUT",
+          "request": {"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\n  \"matricula\": \"{{matriculaColaborador}}\",\n  \"funcao\": \"GERENTE\"\n}","options":{"raw":{"language":"json"}}},
+            "url":"{{baseUrl}}/api/colaboradores/{{colaboradorId}}"}
+        },
+        {
+          "name": "Pesquisar colaboradores",
+          "request": {"method":"GET","header":[],"url":"{{baseUrl}}/api/colaboradores?nome=Postman&funcao=GERENTE&status=ATIVO&page=0&size=20"}
+        },
+        {
+          "name": "Abrir venda",
+          "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\n  \"clienteId\": {{clienteId}},\n  \"vendedorId\": {{colaboradorId}}\n}","options":{"raw":{"language":"json"}}},
+            "url":"{{baseUrl}}/api/vendas"},
+          "event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Venda aberta', () => pm.response.to.have.status(201));","pm.collectionVariables.set('vendaId', pm.response.json().id);"]}}]
+        },
+        {
+          "name": "Adicionar item à venda",
+          "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\n  \"produtoId\": {{produtoId}},\n  \"quantidade\": 1.000\n}","options":{"raw":{"language":"json"}}},
+            "url":"{{baseUrl}}/api/vendas/{{vendaId}}/itens"},
+          "event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Item adicionado', () => pm.response.to.have.status(200));","pm.collectionVariables.set('itemVendaId', pm.response.json().itens[0].id);"]}}]
+        },
+        {
+          "name": "Remover item da venda",
+          "request": {"method":"DELETE","header":[],"url":"{{baseUrl}}/api/vendas/{{vendaId}}/itens/{{itemVendaId}}"}
+        },
+        {
+          "name": "Adicionar novamente o item",
+          "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\n  \"produtoId\": {{produtoId}},\n  \"quantidade\": 1.000\n}","options":{"raw":{"language":"json"}}},
+            "url":"{{baseUrl}}/api/vendas/{{vendaId}}/itens"}
+        },
+        {
+          "name": "Finalizar venda e baixar estoque",
+          "request": {"method":"POST","header":[],"url":"{{baseUrl}}/api/vendas/{{vendaId}}/finalizacao"},
+          "event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Venda finalizada', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().status).to.eql('FINALIZADA'); });"]}}]
+        },
+        {
+          "name": "Consultar venda completa",
+          "request": {"method":"GET","header":[],"url":"{{baseUrl}}/api/vendas/{{vendaId}}"}
+        },
+        {
+          "name": "Pesquisar vendas",
+          "request": {"method":"GET","header":[],"url":"{{baseUrl}}/api/vendas?status=FINALIZADA&clienteId={{clienteId}}&vendedorId={{colaboradorId}}&page=0&size=20&sort=dataVenda,desc"}
+        },
+        {
+          "name": "Abrir venda para cancelamento",
+          "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\n  \"clienteId\": {{clienteId}},\n  \"vendedorId\": {{colaboradorId}}\n}","options":{"raw":{"language":"json"}}},
+            "url":"{{baseUrl}}/api/vendas"},
+          "event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.collectionVariables.set('vendaCancelamentoId', pm.response.json().id);"]}}]
+        },
+        {
+          "name": "Cancelar venda aberta",
+          "request": {"method":"POST","header":[],"url":"{{baseUrl}}/api/vendas/{{vendaCancelamentoId}}/cancelamento"}
+        },
+        {
+          "name": "Inativar pessoa",
+          "request": {"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\n  \"status\": \"INATIVO\"\n}","options":{"raw":{"language":"json"}}},
+            "url":"{{baseUrl}}/api/pessoas/{{pessoaClienteId}}/status"}
+        },
+        {
+          "name": "Reativar pessoa",
+          "request": {"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\n  \"status\": \"ATIVO\"\n}","options":{"raw":{"language":"json"}}},
+            "url":"{{baseUrl}}/api/pessoas/{{pessoaClienteId}}/status"}
+        }
+      ]
+    },
+    {
+      "name": "09 - Integridade histórica",
+      "description": "Demonstra que um produto já referenciado por item de venda não pode ser excluído, preservando o histórico comercial.",
+      "item": [
+        {
+          "name": "Impedir exclusão de produto vendido",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -889,8 +1079,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Produto excluído com 204', function () {",
-                  "    pm.response.to.have.status(204);",
+                  "pm.test('Produto histórico protegido com 409', function () {",
+                  "    pm.response.to.have.status(409);",
                   "});"
                 ]
               }
@@ -898,7 +1088,7 @@
           ]
         },
         {
-          "name": "Excluir grupo",
+          "name": "Impedir exclusão do grupo ainda utilizado",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -910,8 +1100,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Grupo excluído com 204', function () {",
-                  "    pm.response.to.have.status(204);",
+                  "pm.test('Grupo em uso protegido com 409', function () {",
+                  "    pm.response.to.have.status(409);",
                   "});"
                 ]
               }

@@ -204,6 +204,25 @@ Usaremos **code-first** porque a API já existe. Isso não significa declarar o 
 | usar `@Schema` | forma e significado das representações |
 | testar `/v3/api-docs` | contrato como artefato sujeito a regressão |
 
+### Sequência de implementação
+
+Siga esta ordem para separar problemas de dependência, configuração e conteúdo:
+
+```text
+1. adicionar springdoc ao pom.xml
+2. compilar e observar o contrato gerado sem customização
+3. criar OpenApiConfig
+4. adicionar tags aos controllers
+5. documentar uma operação completa, incluindo erros
+6. documentar todos os DTOs usados por essa operação
+7. repetir a revisão operação por operação
+8. documentar paginação e ApiError
+9. configurar exposição por profile
+10. criar o teste do documento e executar o laboratório
+```
+
+Essa ordem é deliberada. Se `/v3/api-docs` não existir após o passo 2, o problema está na dependência ou compatibilidade. Anotações adicionadas depois não resolveriam essa falha estrutural.
+
 ---
 
 ## 5. Checkpoint 1 — Adicionar a integração
@@ -401,7 +420,23 @@ No início de `ProdutoController`, adicione:
 public class ProdutoController {
 ```
 
-Repita o padrão com nomes adequados:
+Adicione explicitamente a anotação em cada controller. O bloco seguinte mostra somente os cabeçalhos; `...` representa o corpo já existente e não deve ser copiado como código Java:
+
+```java
+@Tag(name = "Grupos de produtos",
+     description = "Cadastro, consulta e organização de produtos")
+public class GrupoProdutoController { ... }
+
+@Tag(name = "Fornecedores",
+     description = "Cadastro e consulta de fornecedores")
+public class FornecedorController { ... }
+
+@Tag(name = "Infraestrutura",
+     description = "Verificações técnicas da aplicação")
+public class HealthController { ... }
+```
+
+O quadro resume o resultado esperado:
 
 | Controller | Tag |
 |---|---|
@@ -501,6 +536,64 @@ A última frase comunica que a operação não é idempotente.
 
 Nesse caso, além de `204` e `404`, documente `409` com `ApiError`.
 
+### Revisão operação por operação
+
+Não considere o controller documentado depois de anotar somente um método. Use a matriz abaixo para revisar cada operação existente na Aula 09:
+
+| Operação | Resposta de sucesso | Erros que precisam aparecer |
+|---|---:|---|
+| cadastrar grupo | `201` | `400`, `409` |
+| consultar grupo | `200` | `404` |
+| pesquisar grupos | `200` | `400` para paginação/ordenação |
+| alterar grupo | `200` | `400`, `404`, `409` |
+| alterar status do grupo | `200` | `400`, `404` |
+| excluir grupo | `204` | `404`, `409` |
+| cadastrar fornecedor | `201` | `400`, `409` |
+| consultar/listar fornecedores | `200` | `404` apenas na consulta por ID |
+| cadastrar produto | `201` | `400`, `404`, `409` |
+| consultar produto | `200` | `404` |
+| pesquisar produtos | `200` | `400` |
+| alterar produto | `200` | `400`, `404`, `409` |
+| alterar status do produto | `200` | `400`, `404` |
+| receber/retirar estoque | `200` | `400`, `404` |
+| excluir produto | `204` | `404`, `409` |
+
+Exemplo completo para cadastro de produto:
+
+```java
+@Operation(
+    summary = "Cadastrar produto",
+    description = "Cria um produto ativo associado a um grupo e, "
+            + "opcionalmente, a um fornecedor."
+)
+@ApiResponses({
+    @ApiResponse(responseCode = "201", description = "Produto cadastrado"),
+    @ApiResponse(responseCode = "400", description = "Dados inválidos",
+        content = @Content(
+            schema = @Schema(implementation = ApiError.class))),
+    @ApiResponse(responseCode = "404",
+        description = "Grupo ou fornecedor não encontrado",
+        content = @Content(
+            schema = @Schema(implementation = ApiError.class))),
+    @ApiResponse(responseCode = "409",
+        description = "Código de barras já utilizado",
+        content = @Content(
+            schema = @Schema(implementation = ApiError.class)))
+})
+@PostMapping
+public ResponseEntity<ProdutoResponse> cadastrar(
+        @Valid @RequestBody ProdutoRequest request) {
+    Produto produto = mapper.toEntity(request);
+    Produto cadastrado = service.cadastrar(
+            produto, request.grupoId(), request.fornecedorId());
+    URI location = URI.create("/api/produtos/" + cadastrado.getId());
+    return ResponseEntity.created(location)
+            .body(mapper.toResponse(cadastrado));
+}
+```
+
+Depois de cada controller, reinicie a aplicação e procure seu grupo em `/swagger-ui.html`. Abra pelo menos uma resposta de sucesso e uma de erro no documento JSON. Esse procedimento identifica anotações colocadas no método errado ou schemas não descobertos.
+
 ---
 
 ## 12. Checkpoint 6 — Documentar DTOs
@@ -511,30 +604,65 @@ Anotações do controller explicam a operação. Anotações nos DTOs explicam a
 
 Arquivo `src/main/java/com/curso/suporteos/api/dto/ProdutoRequest.java`:
 
-O trecho abaixo destaca dois componentes. Não substitua o record completo; aplique o mesmo padrão aos demais componentes já existentes.
+Substitua o arquivo pelo record completo abaixo. Um material autônomo não deve deixar componentes essenciais ocultos em `// demais componentes`.
 
 ```java
 @Schema(description = "Dados para cadastrar um produto")
 public record ProdutoRequest(
 
-        @Schema(
-            description = "Código único do produto",
-            example = "7890000000001"
-        )
+        @Schema(description = "Código único do produto",
+                example = "7890000000001")
         @NotBlank(message = "Código de barras é obrigatório")
-        @Size(max = 50)
+        @Size(max = 50,
+                message = "Código de barras deve possuir no máximo 50 caracteres")
         String codigoBarras,
 
-        @Schema(
-            description = "Descrição comercial",
-            example = "Caderno universitário"
-        )
+        @Schema(description = "Descrição comercial",
+                example = "Caderno universitário")
         @NotBlank(message = "Descrição é obrigatória")
-        String descricao
+        @Size(max = 150,
+                message = "Descrição deve possuir no máximo 150 caracteres")
+        String descricao,
 
-        // demais componentes
-) {
-}
+        @Schema(description = "Saldo inicial, que não pode ser negativo",
+                example = "10.000")
+        @NotNull(message = "Saldo de estoque é obrigatório")
+        @PositiveOrZero(message = "Saldo de estoque não pode ser negativo")
+        BigDecimal saldoEstoque,
+
+        @Schema(description = "Preço atual por unidade", example = "18.90")
+        @NotNull(message = "Valor unitário é obrigatório")
+        @PositiveOrZero(message = "Valor unitário não pode ser negativo")
+        BigDecimal valorUnitario,
+
+        @Schema(description = "Limite usado para indicar reposição",
+                example = "3.000")
+        @NotNull(message = "Estoque mínimo é obrigatório")
+        @PositiveOrZero(message = "Estoque mínimo não pode ser negativo")
+        BigDecimal estoqueMinimo,
+
+        @Schema(description = "Identificador de um grupo existente",
+                example = "1")
+        @NotNull(message = "Grupo é obrigatório")
+        @Positive(message = "Identificador do grupo deve ser positivo")
+        Long grupoId,
+
+        @Schema(description = "Identificador opcional de um fornecedor existente",
+                example = "1", nullable = true)
+        @Positive(message = "Identificador do fornecedor deve ser positivo")
+        Long fornecedorId) { }
+```
+
+Imports necessários:
+
+```java
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
 ```
 
 ### Bean Validation e OpenAPI têm papéis complementares
@@ -688,6 +816,20 @@ springdoc.api-docs.enabled=false
 springdoc.swagger-ui.enabled=false
 ```
 
+Verifique a diferença entre ambientes, sem alterar o profile padrão:
+
+```bash
+# desenvolvimento: deve responder 200
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+curl -i http://localhost:8080/v3/api-docs
+
+# produção: depois de reiniciar, deve responder 404
+./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
+curl -i http://localhost:8080/v3/api-docs
+```
+
+O segundo comando exige configuração válida do banco de produção. Se a política local não permitir iniciar esse profile, crie um teste de propriedades ou registre a inspeção do arquivo como evidência; não copie credenciais de produção para executar a demonstração.
+
 Essa decisão não significa que documentação em produção seja sempre errada. APIs públicas frequentemente precisam dela. A escolha deve considerar:
 
 - público consumidor;
@@ -732,10 +874,22 @@ class OpenApiDocumentationTest {
                         "$.paths['/api/grupos-produtos/{id}'].get")
                         .exists())
                 .andExpect(jsonPath(
+                        "$.paths['/api/grupos-produtos/{id}'].put")
+                        .exists())
+                .andExpect(jsonPath(
                         "$.paths['/api/produtos/{id}'].get.summary")
                         .value("Consultar produto por ID"))
                 .andExpect(jsonPath(
+                        "$.paths['/api/produtos/{id}'].get.responses['404'].content")
+                        .exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/produtos/{id}'].delete")
+                        .exists())
+                .andExpect(jsonPath(
                         "$.paths['/api/produtos/{id}/estoque/entradas'].post")
+                        .exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/produtos/{id}/estoque/saidas'].post")
                         .exists())
                 .andExpect(jsonPath(
                         "$.components.schemas.ProdutoResponse")

@@ -76,8 +76,8 @@ public class Fornecedor {
 
     private static String validarCnpj(String cnpj) {
         String valor = validarTextoObrigatorio(cnpj, "CNPJ é obrigatório");
-        if (!valor.matches("\\d{14}")) {
-            throw new IllegalArgumentException("CNPJ deve possuir 14 dígitos");
+        if (!DocumentoFiscal.cnpjValido(valor)) {
+            throw new IllegalArgumentException("CNPJ inválido");
         }
         return valor;
     }

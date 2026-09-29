@@ -70,9 +70,9 @@ public class ApiExceptionHandler {
                 Map.of());
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<ApiError> tratarRegraInvalida(
-            IllegalArgumentException exception,
+            RuntimeException exception,
             HttpServletRequest request) {
         return resposta(
                 HttpStatus.BAD_REQUEST,

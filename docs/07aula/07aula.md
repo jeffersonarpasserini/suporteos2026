@@ -416,7 +416,7 @@ class ProdutoApiTest {
     void deveCadastrarProdutoERetornar201() throws Exception {
         GrupoProduto grupo = grupoRepository.save(new GrupoProduto("Grupo API"));
         Fornecedor fornecedor = fornecedorRepository.save(new Fornecedor(
-                "Fornecedor API", "22222222000192"));
+                "Fornecedor API", "11222333000181"));
 
         String json = """
                 {
@@ -456,7 +456,7 @@ Execute:
 
 O Postman atua como um **cliente HTTP**. Ele permite construir requisições, observar respostas, armazenar variáveis, agrupar cenários em coleções e escrever verificações. Ele não acessa diretamente o Java nem o banco: conversa com a aplicação pela mesma interface HTTP que seria usada por outro sistema.
 
-O roteiro abaixo ensina a construir a coleção para que cada decisão seja compreendida. Como artefato de referência e recuperação, o projeto também fornece a coleção importável [`postman/Suporte-OS.postman_collection.json`](../../postman/Suporte-OS.postman_collection.json), atualizada com todas as operações desenvolvidas até a Aula 09.
+O roteiro abaixo ensina a construir a coleção para que cada decisão seja compreendida. Como artefato de referência e recuperação, o projeto também fornece a coleção importável [`postman/Suporte-OS.postman_collection.json`](../../postman/Suporte-OS.postman_collection.json), atualizada com todas as operações desenvolvidas até a Aula 10.
 
 ### 10.1 Preparar a aplicação
 
@@ -559,7 +559,7 @@ Crie `02 - Cadastrar fornecedor`:
 ```json
 {
   "razaoSocial": "Distribuidora Acadêmica Ltda",
-  "cnpj": "12345678000199"
+  "cnpj": "12345678000195"
 }
 ```
 

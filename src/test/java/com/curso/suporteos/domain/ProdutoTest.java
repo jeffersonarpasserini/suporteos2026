@@ -85,7 +85,7 @@ class ProdutoTest {
         Produto produto = novoProduto("3.000", "12.90");
         GrupoProduto grupoOriginal = new GrupoProduto("Papelaria");
         GrupoProduto grupo = new GrupoProduto("Material escolar");
-        Fornecedor fornecedor = new Fornecedor("Fornecedor escolar", "12345678000199");
+        Fornecedor fornecedor = new Fornecedor("Fornecedor escolar", "12345678000195");
         grupoOriginal.adicionarProduto(produto);
 
         produto.alterarDescricao("Caderno universitário");
