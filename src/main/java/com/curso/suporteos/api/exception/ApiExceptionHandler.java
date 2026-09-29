@@ -1,6 +1,7 @@
 package com.curso.suporteos.api.exception;
 
 import com.curso.suporteos.application.RecursoDuplicadoException;
+import com.curso.suporteos.application.RecursoEmUsoException;
 import com.curso.suporteos.application.RecursoNaoEncontradoException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -29,11 +30,13 @@ public class ApiExceptionHandler {
                 Map.of());
     }
 
-    @ExceptionHandler({RecursoDuplicadoException.class, DataIntegrityViolationException.class})
+    @ExceptionHandler({RecursoDuplicadoException.class, RecursoEmUsoException.class,
+            DataIntegrityViolationException.class})
     public ResponseEntity<ApiError> tratarConflito(
             RuntimeException exception,
             HttpServletRequest request) {
         String mensagem = exception instanceof RecursoDuplicadoException
+                || exception instanceof RecursoEmUsoException
                 ? exception.getMessage()
                 : "A operação viola uma regra de integridade";
         return resposta(HttpStatus.CONFLICT, mensagem, request, Map.of());
@@ -63,6 +66,17 @@ public class ApiExceptionHandler {
         return resposta(
                 HttpStatus.BAD_REQUEST,
                 "JSON ausente ou inválido",
+                request,
+                Map.of());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> tratarRegraInvalida(
+            IllegalArgumentException exception,
+            HttpServletRequest request) {
+        return resposta(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage(),
                 request,
                 Map.of());
     }

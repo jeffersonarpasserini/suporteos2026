@@ -67,6 +67,15 @@ class GrupoProdutoTest {
                 () -> grupo.getProdutos().add(novoProduto("7890000000002")));
     }
 
+    @Test
+    void deveAlterarNomeRemovendoEspacosExternos() {
+        GrupoProduto grupo = new GrupoProduto("Papelaria");
+
+        grupo.alterarNome("  Material escolar  ");
+
+        assertEquals("Material escolar", grupo.getNome());
+    }
+
     private Produto novoProduto(String codigoBarras) {
         return new Produto(
                 codigoBarras,

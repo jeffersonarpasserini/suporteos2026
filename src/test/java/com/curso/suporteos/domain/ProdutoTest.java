@@ -80,6 +80,29 @@ class ProdutoTest {
         assertEquals(Status.ATIVO, produto.getStatus());
     }
 
+    @Test
+    void deveAlterarDadosEditaveis() {
+        Produto produto = novoProduto("3.000", "12.90");
+        GrupoProduto grupoOriginal = new GrupoProduto("Papelaria");
+        GrupoProduto grupo = new GrupoProduto("Material escolar");
+        Fornecedor fornecedor = new Fornecedor("Fornecedor escolar", "12345678000199");
+        grupoOriginal.adicionarProduto(produto);
+
+        produto.alterarDescricao("Caderno universitário");
+        produto.alterarValorUnitario(new BigDecimal("19.90"));
+        produto.alterarEstoqueMinimo(new BigDecimal("2.000"));
+        produto.alterarGrupo(grupo);
+        produto.alterarFornecedor(fornecedor);
+
+        assertEquals("Caderno universitário", produto.getDescricao());
+        assertEquals(0, new BigDecimal("19.90").compareTo(produto.getValorUnitario()));
+        assertEquals(0, new BigDecimal("2.000").compareTo(produto.getEstoqueMinimo()));
+        assertEquals(grupo, produto.getGrupo());
+        assertEquals(fornecedor, produto.getFornecedor());
+        assertEquals(0, grupoOriginal.getProdutos().size());
+        assertEquals(1, grupo.getProdutos().size());
+    }
+
     private Produto novoProduto(String saldo, String valorUnitario) {
         return new Produto(
                 "7890000000001",

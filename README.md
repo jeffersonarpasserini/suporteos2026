@@ -30,13 +30,14 @@ O sistema será construído incrementalmente. Cada aula termina em um estado exe
 | 05 | Spring Data JPA, repositories, serviços e transações | [Abrir Aula 05](docs/05aula/05aula.md) |
 | 06 | Evolução do modelo e geração assistida de changelogs | [Abrir Aula 06](docs/06aula/06aula.md) |
 | 07 | API REST, DTOs, mapeadores e testes com Postman | [Abrir Aula 07](docs/07aula/07aula.md) |
+| 08 | CRUD completo, estoque, filtros e paginação | [Abrir Aula 08](docs/08aula/08aula.md) |
 
 ## Organização pedagógica
 
 As aulas combinam fundamentação conceitual, implementação incremental, evidências de execução, diagnóstico, atividade de transferência e avaliação. O material não deve apresentar código ou configuração como uma sequência isolada de procedimentos.
 
 - [Padrão pedagógico obrigatório das aulas](docs/PADRAO-PEDAGOGICO.md)
-- [Revisão pedagógica das Aulas 00 a 02](docs/REVISAO-PEDAGOGICA-AULAS-00-02.md)
+- [Revisão pedagógica e acompanhamento das Aulas 00 a 08](docs/REVISAO-PEDAGOGICA-AULAS-00-08.md)
 
 ## Projeto de referência
 
@@ -83,7 +84,7 @@ Após iniciar a aplicação, estão disponíveis os cadastros, consultas por ID 
 - `http://localhost:8080/api/fornecedores`;
 - `http://localhost:8080/api/produtos`.
 
-Os contratos usam DTOs, validação de entrada e respostas de erro padronizadas. A [Aula 07](docs/07aula/07aula.md) contém um laboratório completo de testes com Postman.
+Os contratos usam DTOs, validação de entrada e respostas de erro padronizadas. A [Aula 07](docs/07aula/07aula.md) contém um laboratório completo de testes com Postman. A [Aula 08](docs/08aula/08aula.md) acrescenta alteração, exclusão, status, movimentações de estoque, filtros, ordenação e paginação para grupos e produtos.
 
 ## Executando os testes
 

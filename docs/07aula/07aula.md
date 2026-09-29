@@ -3,6 +3,18 @@
 > Projeto de referência: **Suporte OS 2026**  
 > Nesta etapa, cada estudante deve aplicar os mesmos conceitos ao tema escolhido na Aula 02.
 
+## Apresentação
+
+Até a Aula 06, os casos de uso são exercitados por testes Java. Um cliente externo ainda não possui um contrato estável para cadastrar ou consultar os recursos. Nesta aula criaremos a fronteira HTTP da aplicação sem expor diretamente as entidades JPA.
+
+O incremento será construído em cinco pontos de quebra: contratos DTO, mapeadores, controllers, erros padronizados e testes da camada web. Depois, o mesmo contrato será explorado como cliente externo pelo Postman.
+
+Nesta etapa implementaremos leitura e cadastro. Atualização, exclusão, status, movimentação de estoque, filtros e paginação pertencem à Aula 08.
+
+## Problema orientador
+
+Como permitir que diferentes clientes utilizem os casos de uso da aplicação por HTTP, com representações estáveis, validação, códigos de status previsíveis e testes reproduzíveis, sem acoplar o contrato externo às entidades e ao banco?
+
 ## 1. Objetivos de aprendizagem
 
 Ao final desta aula, o estudante deverá ser capaz de:
@@ -26,6 +38,19 @@ Ao final desta aula, o estudante deverá ser capaz de:
 - arquivo `.env` configurado;
 - aplicação iniciando sem erros;
 - Postman instalado ou acesso à versão web com o Desktop Agent.
+
+## Mapeamento teoria–prática
+
+| Ação da aula | Conceito observado |
+|---|---|
+| criar DTO de entrada | contrato externo e validação de fronteira |
+| criar DTO de saída | controle da representação pública |
+| mapear DTO e entidade | separação de responsabilidades |
+| criar controller | adaptação entre HTTP e caso de uso |
+| devolver `201` e `Location` | semântica de criação de recurso |
+| criar `ApiError` | previsibilidade e não vazamento de detalhes internos |
+| testar com MockMvc | contrato automatizado sem porta de rede |
+| testar com Postman | observação da API por um cliente externo |
 
 ## 3. O que é uma API?
 
@@ -752,20 +777,34 @@ No tema escolhido na Aula 02:
 6. Por que IDs produzidos por uma requisição devem ser armazenados em variáveis?
 7. O que seria necessário para tornar os cenários do Collection Runner independentes?
 
-## 14. Critérios de avaliação sugeridos
+## 14. Rubrica de avaliação
 
-| Critério | Pontos |
-|---|---:|
-| contratos DTO coerentes e sem exposição de entidades | 2,0 |
-| validações de entrada e invariantes de domínio | 1,5 |
-| mapeadores com responsabilidade bem definida | 1,0 |
-| rotas e códigos HTTP adequados | 2,0 |
-| tratamento padronizado de erros | 1,0 |
-| testes automatizados da camada web | 1,5 |
-| coleção Postman organizada e segura | 1,0 |
-| **Total** | **10,0** |
+| Critério | 4 — Pleno | 3 — Adequado | 2 — Parcial | 1 — Insuficiente |
+|---|---|---|---|---|
+| contratos DTO | entrada e saída coerentes, mínimos e sem exposição de entidades | contratos corretos com pequenos excessos | mistura responsabilidades ou omite campos relevantes | usa entidade como contrato público |
+| validação | fronteira e domínio se complementam com mensagens claras | validações principais corretas | valida apenas parte dos campos | aceita dados inválidos ou depende só do controller |
+| mapeadores | transformação explícita, sem consulta, transação ou HTTP | mapeamento correto com pequena duplicação | transformação espalhada | controller manipula entidade diretamente |
+| rotas e status | recursos, métodos, `Location` e status semanticamente corretos | caminho feliz correto | inconsistências pontuais de rota/status | retorna `200` indiscriminadamente |
+| erros | contrato uniforme para `400`, `404` e `409`, sem vazamento | principais falhas padronizadas | formatos ou status inconsistentes | stack trace ou detalhe interno exposto |
+| testes MockMvc | sucesso e falhas verificam status, headers e corpo | cobre os casos principais | cobre apenas caminho feliz | não possui evidência automatizada |
+| Postman e segurança | coleção ordenada, variáveis, scripts e nenhum segredo | coleção funcional e segura | execução depende de valores manuais | contém segredo ou não reproduz o fluxo |
+| argumentação | justifica decisões e limites da aula | explica conceitos centrais | relata passos sem relacioná-los | entrega apenas código/comandos |
 
-## 15. Encerramento e tag da aula
+## 15. Checklist, encerramento e tag da aula
+
+- [ ] Entidades JPA não são devolvidas diretamente.
+- [ ] DTOs de entrada possuem validações coerentes.
+- [ ] DTOs de saída expõem somente dados intencionais.
+- [ ] Mapeadores não consultam banco nem conhecem HTTP.
+- [ ] Controllers delegam regras aos services.
+- [ ] Cadastros devolvem `201` e `Location`.
+- [ ] Consultas devolvem `200` ou `404`.
+- [ ] Validação, JSON inválido e duplicidade usam o contrato `ApiError`.
+- [ ] Respostas não expõem stack trace, SQL ou credenciais.
+- [ ] Testes MockMvc passam com o profile `test`.
+- [ ] A coleção Postman executa caminho feliz e cenários negativos.
+- [ ] A exportação da coleção não contém segredos.
+- [ ] `git diff --check` não encontra problemas.
 
 Antes de versionar:
 
@@ -787,7 +826,43 @@ git push origin aula-07-api-rest-dtos-mappers
 
 Não crie a tag se os testes estiverem falhando. A tag representa um ponto reproduzível do curso.
 
-## 16. Referências para aprofundamento
+## 16. Orientações para o professor
+
+### Sequência sugerida
+
+| Bloco | Tempo sugerido | Ênfase |
+|---|---:|---|
+| contrato HTTP e DTOs | 35 min | representação não é entidade |
+| mapeadores | 20 min | fronteiras e responsabilidade |
+| controllers e status | 40 min | semântica HTTP |
+| erros padronizados | 30 min | falhas conhecidas versus inesperadas |
+| MockMvc | 35 min | evidência automatizada |
+| laboratório Postman | 50 min | cliente externo e variáveis |
+
+### Demonstrações essenciais
+
+- mostrar o risco de serializar uma associação JPA bidirecional;
+- comparar `Produto` e `ProdutoResponse` campo a campo;
+- inspecionar o header `Location`;
+- provocar `400`, `404` e `409` e comparar os corpos;
+- executar o mesmo endpoint por MockMvc, Postman e `curl`.
+
+### Perguntas para discussão
+
+- Qual campo da entidade não deveria entrar no contrato público?
+- Um DTO elimina a necessidade de invariantes no domínio?
+- Por que um erro conhecido do cliente não deve virar `500`?
+- O que MockMvc comprova que o Postman não automatiza, e vice-versa?
+
+### Falhas controladas
+
+- remover `@Valid` temporariamente;
+- enviar JSON com nome de campo incorreto;
+- usar ID relacionado inexistente;
+- repetir código de barras;
+- acessar uma associação lazy fora da transação e discutir a consulta correta.
+
+## 17. Referências para aprofundamento
 
 - Spring Framework — Web MVC e controllers anotados: <https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller.html>
 - Spring Framework — Bean Validation: <https://docs.spring.io/spring-framework/reference/core/validation/beanvalidation.html>

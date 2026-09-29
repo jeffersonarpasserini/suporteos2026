@@ -388,19 +388,99 @@ Depois recrie `reference` e compare com um banco já migrado. Um diff vazio ou a
 | diff remove objetos antigos | compare semântica, naming e drift antes de aceitar |
 | arquivo gerado foi versionado em `target` | confirme `.gitignore`; somente migração revisada entra no Git |
 
-## 16. Atividade de transferência
+## 16. Segurança e qualidade
 
-Cada estudante deverá adicionar uma entidade ou campo no tema próprio, gerar o rascunho, registrar pelo menos três problemas encontrados e entregar a migração revisada com teste de preservação de dados.
+Esta aula utiliza operações capazes de recriar estruturas. Antes de executar qualquer comando, confirme o banco de destino e preserve estas regras:
 
-## 17. Questões
+- `schema-reference` pode apontar somente para o banco descartável `reference`;
+- `diff` deve conter exclusivamente a baseline da aula anterior;
+- bancos `dev`, `test`, compartilhados e de produção nunca podem ser usados como referência destrutiva;
+- `.env`, dumps e arquivos em `target/` não entram no Git;
+- o rascunho automático não deve ser incluído diretamente no changelog mestre;
+- changeSets publicados não são editados para acomodar a nova versão;
+- toda transformação de dados deve possuir evidência de preservação;
+- rollback deve ser escrito quando a operação inversa for segura e semanticamente válida.
+
+Antes dos comandos, registre as URLs sem senha e peça a um colega para conferir os nomes dos bancos. Essa revisão cruzada reduz o risco de apontar `ddl-auto=create` para o destino errado.
+
+## 17. Atividade orientada
+
+Em dupla, compare o rascunho gerado com a migração 003 definitiva e produza uma tabela:
+
+```text
+operação gerada | risco | decisão final | justificativa | teste
+```
+
+A tabela deve incluir ao menos:
+
+1. remoção e recriação da FK antiga;
+2. coluna criada diretamente como `NOT NULL`;
+3. nomes automáticos de constraints;
+4. checks não gerados;
+5. ausência de rollback.
+
+Depois, execute os testes e confirme a quantidade de changeSets correspondente ao ponto histórico da Aula 06.
+
+## 18. Atividade autônoma e transferência
+
+No tema próprio, cada estudante deverá:
+
+1. adicionar uma entidade ou campo que exija evolução do banco;
+2. justificar se a nova relação é obrigatória ou opcional;
+3. gerar o schema de referência e o rascunho de diff;
+4. registrar pelo menos três problemas encontrados no arquivo automático;
+5. escrever a migração oficial revisada;
+6. preservar pelo menos uma linha criada no estado anterior;
+7. testar constraint, backfill e leitura pela aplicação;
+8. apresentar um diff final vazio ou explicar cada diferença remanescente.
+
+Entregáveis:
+
+- descrição da mudança de domínio;
+- rascunho não versionado e tabela crítica;
+- changelog oficial;
+- teste de preservação de dados;
+- resultado do Maven Wrapper;
+- evidência do histórico Liquibase;
+- texto curto explicando expand–migrate–contract.
+
+## 19. Questões
 
 1. Por que `ddl-auto=create` só pode apontar para o banco descartável?
 2. O que o diff sabe e o que ele não sabe?
 3. Por que adicionar `NOT NULL` exige considerar dados existentes?
 4. Por que um diff aparentemente vazio ainda precisa ser interpretado?
 5. Qual diferença existe entre schema de referência e changelog oficial?
+6. Por que um rollback sintaticamente válido pode ser inseguro para dados?
+7. Que evidência confirma que o banco `reference` é realmente descartável?
+8. Como distinguir ruído do diff de uma divergência real?
 
-## 18. Ponto de quebra
+## 20. Rubrica de avaliação
+
+| Critério | 4 — Pleno | 3 — Adequado | 2 — Parcial | 1 — Insuficiente |
+|---|---|---|---|---|
+| modelo e compatibilidade | mudança justificada e compatível com dados anteriores | mudança coerente com pequena lacuna | impacto parcialmente analisado | altera classes sem avaliar dados |
+| crítica do diff | identifica riscos, ruídos e ausências com justificativa | identifica os principais problemas | aceita parte do rascunho sem análise | aplica o arquivo automaticamente |
+| migração | sequência segura, nomes estáveis, checks e rollback | migração correta com pequenas lacunas | funciona apenas em banco vazio | falha ou perde dados |
+| preservação de dados | teste demonstra estado anterior, backfill e estado final | testa preservação principal | evidência incompleta | não testa dados existentes |
+| segurança operacional | confirma destinos e não expõe segredos/artefatos | executa com destinos corretos | depende de correção externa | usa banco indevido ou versiona segredo |
+| convergência | diff final interpretado e justificado | entidades e schema convergem | restam diferenças sem análise completa | Hibernate não valida o schema |
+| comunicação | explica decisões e limitações com precisão | apresenta justificativas centrais | relata passos sem conectar conceitos | entrega apenas arquivos |
+
+## 21. Checklist e ponto de quebra
+
+- [ ] O banco `reference` foi confirmado como descartável.
+- [ ] O banco `diff` contém somente a baseline esperada.
+- [ ] Nenhum comando destrutivo aponta para `dev`, `test` ou produção.
+- [ ] O rascunho foi revisado e não foi incluído diretamente no master.
+- [ ] A migração preserva linhas existentes.
+- [ ] Constraints possuem nomes estáveis.
+- [ ] Checks ausentes na geração foram adicionados conscientemente.
+- [ ] Rollbacks seguros foram escritos.
+- [ ] Os testes passam no PostgreSQL.
+- [ ] A convergência foi verificada.
+- [ ] `.env`, dumps e `target/` não estão no commit.
+- [ ] `git diff --check` não encontra problemas.
 
 ```bash
 ./mvnw test
@@ -413,7 +493,39 @@ git tag -a aula-06-evolucao-modelo-liquibase-diff \
 
 Não inclua `.env`, bancos, dumps ou `target/liquibase-diff`.
 
-## Referências
+## 22. Orientações para o professor
+
+### Sequência sugerida
+
+| Bloco | Tempo sugerido | Ênfase |
+|---|---:|---|
+| geração versus migração | 25 min | limites da automação |
+| evolução do domínio | 30 min | compatibilidade e opcionalidade |
+| preparação dos bancos | 25 min | segurança operacional |
+| geração e leitura do diff | 40 min | interpretação crítica |
+| escrita da migração 003 | 50 min | expand–migrate–contract |
+| testes e convergência | 30 min | evidências |
+
+Prepare os bancos antes da aula para que problemas de infraestrutura não consumam o tempo destinado à análise.
+
+### Demonstrações essenciais
+
+- mostrar a URL de cada banco antes de executar comandos;
+- tentar adicionar `NOT NULL` diretamente sobre uma tabela com dados;
+- mostrar por que remover/recriar FK pode ser ruído perigoso;
+- comparar rascunho automático e changelog final;
+- consultar uma linha antiga antes e depois da migração.
+
+### Falhas controladas
+
+- executar diff sem baseline;
+- deixar uma variável do Maven ausente;
+- apontar o profile de referência para um banco vazio criado para a demonstração;
+- remover temporariamente o backfill e observar a falha do `NOT NULL`.
+
+Nunca simule uma falha destrutiva em banco com dados relevantes.
+
+## 23. Referências
 
 - [Liquibase — Database Inspection Commands](https://docs.liquibase.com/community/reference-guide-5-0-3/database-inspection-change-tracking-and-utility-commands/what-are-database-inspection-commands)
 - [Liquibase Hibernate Integration](https://github.com/liquibase/liquibase-hibernate)

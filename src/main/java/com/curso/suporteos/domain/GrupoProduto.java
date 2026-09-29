@@ -43,20 +43,13 @@ public class GrupoProduto {
 
     public void adicionarProduto(Produto produto) {
         Objects.requireNonNull(produto, "Produto é obrigatório");
-
-        boolean codigoJaUtilizado = produtos.stream()
-                .anyMatch(item -> item != produto
-                        && item.getCodigoBarras().equals(produto.getCodigoBarras()));
-
-        if (codigoJaUtilizado) {
-            throw new IllegalArgumentException("Código de barras já utilizado no grupo");
-        }
-
+        validarInclusao(produto);
         produto.associarAo(this);
+        adicionarInternamente(produto);
+    }
 
-        if (!produtos.contains(produto)) {
-            produtos.add(produto);
-        }
+    public void alterarNome(String novoNome) {
+        this.nome = validarTextoObrigatorio(novoNome, "Nome do grupo é obrigatório");
     }
 
     public void ativar() {
@@ -81,6 +74,26 @@ public class GrupoProduto {
 
     public List<Produto> getProdutos() {
         return List.copyOf(produtos);
+    }
+
+    void validarInclusao(Produto produto) {
+        boolean codigoJaUtilizado = produtos.stream()
+                .anyMatch(item -> item != produto
+                        && item.getCodigoBarras().equals(produto.getCodigoBarras()));
+
+        if (codigoJaUtilizado) {
+            throw new IllegalArgumentException("Código de barras já utilizado no grupo");
+        }
+    }
+
+    void adicionarInternamente(Produto produto) {
+        if (!produtos.contains(produto)) {
+            produtos.add(produto);
+        }
+    }
+
+    void removerInternamente(Produto produto) {
+        produtos.remove(produto);
     }
 
     private static String validarTextoObrigatorio(String texto, String mensagem) {

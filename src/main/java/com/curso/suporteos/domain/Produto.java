@@ -145,6 +145,28 @@ public class Produto {
                 "Valor unitário não pode ser negativo");
     }
 
+    public void alterarEstoqueMinimo(BigDecimal novoEstoqueMinimo) {
+        this.estoqueMinimo = validarNaoNegativo(
+                novoEstoqueMinimo,
+                "Estoque mínimo não pode ser negativo");
+    }
+
+    public void alterarGrupo(GrupoProduto novoGrupo) {
+        Objects.requireNonNull(
+                novoGrupo,
+                "Grupo de produto é obrigatório");
+        if (this.grupo == novoGrupo) {
+            return;
+        }
+
+        novoGrupo.validarInclusao(this);
+        if (this.grupo != null) {
+            this.grupo.removerInternamente(this);
+        }
+        this.grupo = novoGrupo;
+        novoGrupo.adicionarInternamente(this);
+    }
+
     public void ativar() {
         this.status = Status.ATIVO;
     }
@@ -167,6 +189,10 @@ public class Produto {
         this.fornecedor = Objects.requireNonNull(
                 fornecedor,
                 "Fornecedor é obrigatório");
+    }
+
+    public void alterarFornecedor(Fornecedor fornecedor) {
+        this.fornecedor = fornecedor;
     }
 
     public String getCodigoBarras() {

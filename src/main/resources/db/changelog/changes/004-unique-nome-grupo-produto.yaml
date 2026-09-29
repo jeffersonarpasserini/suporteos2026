@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-01-unique-nome-normalizado-grupo-produto
+      author: curso-spring-2026
+      comment: Garante no PostgreSQL a unicidade do nome do grupo sem diferenciar maiúsculas.
+      changes:
+        - sql:
+            sql: >
+              CREATE UNIQUE INDEX uk_grupo_produto_nome_lower
+              ON grupo_produto (LOWER(BTRIM(nome)))
+      rollback:
+        - sql:
+            sql: >
+              DROP INDEX uk_grupo_produto_nome_lower
