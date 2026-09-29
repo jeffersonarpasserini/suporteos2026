@@ -456,6 +456,8 @@ Execute:
 
 O Postman atua como um **cliente HTTP**. Ele permite construir requisições, observar respostas, armazenar variáveis, agrupar cenários em coleções e escrever verificações. Ele não acessa diretamente o Java nem o banco: conversa com a aplicação pela mesma interface HTTP que seria usada por outro sistema.
 
+O roteiro abaixo ensina a construir a coleção para que cada decisão seja compreendida. Como artefato de referência e recuperação, o projeto também fornece a coleção importável [`postman/Suporte-OS.postman_collection.json`](../../postman/Suporte-OS.postman_collection.json), atualizada com todas as operações desenvolvidas até a Aula 09.
+
 ### 10.1 Preparar a aplicação
 
 1. Confirme que o PostgreSQL está em execução.

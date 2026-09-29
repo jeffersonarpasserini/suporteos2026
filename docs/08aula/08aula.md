@@ -1102,6 +1102,8 @@ pm.test("Resposta não deve possuir corpo", function () {
 
 Não coloque a exclusão antes de requisições que ainda dependem do produto.
 
+A versão consolidada e importável está em [`postman/Suporte-OS.postman_collection.json`](../../postman/Suporte-OS.postman_collection.json). Ela organiza a exclusão em uma pasta final, captura os IDs automaticamente e inclui os cenários negativos sem armazenar credenciais.
+
 ---
 
 ## 15. Diagnóstico orientado por evidências

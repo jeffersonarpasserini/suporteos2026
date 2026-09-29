@@ -1,4 +1,4 @@
-# Revisão pedagógica e acompanhamento — Aulas 00 a 08
+# Revisão pedagógica e acompanhamento — Aulas 00 a 09
 
 [⬅ Voltar para o índice do curso](../README.md)
 
@@ -8,17 +8,17 @@
 
 | Item | Situação |
 |---|---|
-| Escopo | Aulas 00 a 08 |
+| Escopo | Aulas 00 a 09 |
 | Tipo de revisão | Pedagógica, técnica e longitudinal |
 | Última atualização | 29 de setembro de 2026 |
 | Java adotado | Java 21 |
 | Spring Boot adotado | 4.0.7 |
 | Projeto de referência | `suporteos2026` |
-| Estado técnico verificado | 48 testes aprovados no PostgreSQL 16 |
+| Estado técnico verificado | 49 testes aprovados no PostgreSQL 16 |
 
 ## Escopo da revisão
 
-Esta revisão avalia as nove aulas atualmente existentes no curso:
+Esta revisão avalia as dez aulas atualmente existentes no curso:
 
 - Aula 00 — GitHub e início do projeto;
 - Aula 01 — configuração do ambiente;
@@ -28,7 +28,8 @@ Esta revisão avalia as nove aulas atualmente existentes no curso:
 - Aula 05 — Spring Data JPA, repositories, serviços e transações;
 - Aula 06 — evolução do modelo e geração assistida de changelogs;
 - Aula 07 — API REST, DTOs, mapeadores e testes com Postman;
-- Aula 08 — CRUD completo, estoque, filtros e paginação.
+- Aula 08 — CRUD completo, estoque, filtros e paginação;
+- Aula 09 — OpenAPI, documentação executável e contrato verificável.
 
 A análise considera:
 
@@ -49,18 +50,19 @@ O [padrão pedagógico do curso](PADRAO-PEDAGOGICO.md) foi usado como referênci
 
 Foram confrontados:
 
-- os materiais Markdown das Aulas 00 a 08;
+- os materiais Markdown das Aulas 00 a 09;
 - o `README.md` e seu índice;
 - a estrutura Maven;
 - as classes de domínio, repositories, services, DTOs e controllers;
 - os changelogs Liquibase;
-- os testes unitários, de persistência, aplicação e API;
+- os testes unitários, de persistência, aplicação, API e contrato OpenAPI;
+- a coleção Postman consolidada e suas variáveis de execução;
 - a execução da suíte com PostgreSQL real.
 
 Na verificação técnica mais recente, o Liquibase reconheceu 18 changeSets e a suíte terminou com:
 
 ```text
-Tests run: 48
+Tests run: 49
 Failures: 0
 Errors: 0
 Skipped: 0
@@ -71,7 +73,7 @@ Essa evidência confirma o estado atual do protótipo. Ela não substitui as evi
 
 ---
 
-## Síntese das Aulas 00 a 08
+## Síntese das Aulas 00 a 09
 
 | Aula | Contexto e teoria | Prática e verificação | Transferência e avaliação | Situação geral |
 |---:|---|---|---|---|
@@ -84,10 +86,11 @@ Essa evidência confirma o estado atual do protótipo. Ela não substitui as evi
 | 06 | evolução segura e revisão de automação | diff, migração 003 e convergência | atividades, rubrica e orientação docente | Atende |
 | 07 | REST, DTOs, validação e erros | controllers, MockMvc e Postman | atividade, rubrica, checklist e orientação docente | Atende |
 | 08 | semântica de atualização, exclusão e consulta | PUT, DELETE, estoque, filtros e paginação | atividade, rubrica, checklist e orientação docente | Atende |
+| 09 | contrato explícito e documentação executável | OpenAPI, Swagger UI, schemas e teste do contrato | laboratório, transferência, rubrica e orientação docente | Atende |
 
 ### Conclusão da síntese
 
-As nove aulas formam uma progressão coerente:
+As dez aulas formam uma progressão coerente:
 
 ```text
 Aula 00: preservar e publicar o trabalho
@@ -107,6 +110,8 @@ Aula 06: evoluir classes e banco sem perder dados
 Aula 07: expor casos de uso por uma API REST
     ↓
 Aula 08: completar operações e consultas escaláveis
+    ↓
+Aula 09: tornar o contrato explícito, navegável e verificável
 ```
 
 Cada aula parte de um estado executável e acrescenta uma responsabilidade principal. A sequência evita misturar domínio, persistência, transação e HTTP antes que cada fundamento possa ser observado e testado isoladamente.
@@ -555,6 +560,63 @@ A aula passa a atender o padrão editorial. Permanecem como evoluções curricul
 
 ---
 
+## Aula 09 — OpenAPI: contrato executável e documentação da API
+
+### Finalidade pedagógica observada
+
+A aula transforma a API implementada nas aulas anteriores em um contrato explícito, legível por pessoas e processável por ferramentas. O estudante diferencia especificação, documento, interface visual e biblioteca geradora, analisa o resultado automático e acrescenta o significado de negócio que não pode ser deduzido apenas das assinaturas Java.
+
+### Pontos fortes
+
+- parte do problema concreto de uma equipe consumidora sem acesso ao código-fonte;
+- distingue OpenAPI, documento OpenAPI, Swagger UI e `springdoc-openapi`;
+- compara as estratégias design-first e code-first sem apresentar uma delas como universal;
+- relaciona a geração automática do contrato à revisão humana estudada na Aula 06;
+- usa uma dependência compatível com Spring Boot 4;
+- configura título, descrição, versão, contato e documentação externa;
+- organiza controllers por recurso com `@Tag`;
+- documenta intenção, parâmetros e respostas com `@Operation`, `@Parameter` e `@ApiResponse`;
+- representa sucessos e erros, incluindo `ApiError`;
+- acrescenta exemplos e significado aos DTOs com `@Schema`;
+- explica filtros, ordenação e `PaginaResponse`;
+- disponibiliza JSON, YAML e Swagger UI nos ambientes de estudo;
+- desabilita conscientemente a documentação no profile de produção;
+- cria teste MockMvc específico para metadados, caminhos, respostas e schemas;
+- fornece laboratório exploratório e coleção Postman importável;
+- diferencia exploração manual de verificação automatizada;
+- inclui diagnóstico, segurança, transferência, rubrica e orientação docente.
+
+### Alinhamento entre resultado, atividade e evidência
+
+| Resultado pretendido | Atividade | Evidência |
+|---|---|---|
+| diferenciar os componentes | comparar especificação, documento, UI e biblioteca | explicação conceitual e mapa do fluxo |
+| ler um contrato | localizar `info`, `paths`, respostas e schemas | inspeção do JSON ou YAML |
+| gerar documentação | integrar o springdoc | `/v3/api-docs` e Swagger UI disponíveis |
+| acrescentar semântica | documentar operações, DTOs e erros | contrato enriquecido e navegável |
+| verificar regressões | testar rotas e schemas essenciais | `OpenApiDocumentationTest` aprovado |
+| atuar como consumidor | executar cenários sem consultar controllers | laboratório Swagger UI e coleção Postman |
+| transferir conhecimento | documentar a API temática | contrato e justificativas do estudante |
+
+### Evidência de execução
+
+O protótipo foi validado com 49 testes no PostgreSQL. O teste adicional consulta `/v3/api-docs` dentro do contexto Spring e confirma versão, metadados, operações essenciais, conteúdo de respostas e schemas. A coleção Postman contém todas as operações atuais, variáveis internas, captura automática de IDs e cenários de sucesso e erro.
+
+### Segurança e qualidade
+
+- exemplos usam dados fictícios;
+- a coleção não contém senha, token ou chave de API;
+- a documentação permanece ativa em desenvolvimento e teste;
+- o profile `prod` desabilita documento e interface até que sua publicação seja deliberada;
+- Swagger UI é tratada como cliente exploratório, não como substituta de MockMvc;
+- o documento gerado é tratado como evidência revisável, não como verdade automática.
+
+### Situação perante o padrão pedagógico
+
+A aula atende ao padrão definido. Há contextualização, resultados observáveis, fundamentos, mapeamento teoria–prática, desenvolvimento incremental, diagnóstico, segurança, transferência, atividades, rubrica, ponto de quebra e orientação docente. A implementação e o material estão alinhados, e a coleção Postman oferece um artefato executável adicional.
+
+---
+
 ## Cobertura acumulada das previsões
 
 A revisão inicial registrava conteúdos que deveriam aparecer nas aulas futuras. O quadro abaixo mostra onde foram efetivamente desenvolvidos.
@@ -573,13 +635,13 @@ A revisão inicial registrava conteúdos que deveriam aparecer nas aulas futuras
 | controllers REST | contrato HTTP, status e representações | Atendido na Aula 07; CRUD ampliado na 08 |
 | tratamento de erros | taxonomia de falhas e não vazamento | Atendido nas Aulas 07 e 08 |
 | testes HTTP | MockMvc e contrato da API | Atendido nas Aulas 07 e 08 |
-| testes manuais | cliente HTTP, variáveis e cenários | Atendido na Aula 07 com Postman e `curl` |
+| testes manuais | cliente HTTP, variáveis e cenários | Atendido na Aula 07; coleção consolidada na 09 |
 | atualização com `PUT` | idempotência e campos controlados | Atendido na Aula 08 |
 | exclusão | integridade e conflito de recurso em uso | Atendido na Aula 08 |
 | paginação e filtros | consulta no banco, limites e ordenação | Atendido na Aula 08 |
 | segurança | segredos, validação e menor privilégio | Parcialmente atendido de forma transversal |
 | autenticação e autorização | identidade do usuário e controle de acesso | Ainda não abordado |
-| OpenAPI | contrato executável e documentação da API | Ainda não abordado |
+| OpenAPI | contrato executável e documentação da API | Atendido na Aula 09 |
 | Docker como conteúdo | imagem, contêiner, rede e volume | Usado como infraestrutura; aula própria ainda pendente |
 | implantação | artefato, configuração, observabilidade e entrega | Ainda não abordado |
 
@@ -593,11 +655,13 @@ As limitações registradas na Aula 02 foram retomadas da seguinte forma:
 - consultas por ID para telas de alteração: Aulas 07 e 08;
 - atualização idempotente com `PUT`: Aula 08;
 - exclusão e conflitos de integridade: Aula 08;
-- pesquisa, filtros, ordenação e paginação: Aula 08.
+- pesquisa, filtros, ordenação e paginação: Aula 08;
+- contrato OpenAPI, schemas e documentação interativa: Aula 09;
+- coleção Postman completa e versionada: Aula 09.
 
 ---
 
-## Coerência da progressão até a Aula 08
+## Coerência da progressão até a Aula 09
 
 | Aula | Incremento principal | Dependência conceitual anterior |
 |---:|---|---|
@@ -610,6 +674,7 @@ As limitações registradas na Aula 02 foram retomadas da seguinte forma:
 | 06 | evolução do modelo e migração assistida | histórico Liquibase e serviços |
 | 07 | API REST, DTOs, erros e MockMvc | casos de uso transacionais |
 | 08 | atualização, exclusão, estoque e consultas paginadas | contrato REST básico |
+| 09 | OpenAPI, Swagger UI e teste do contrato | API com operações e representações estáveis |
 
 A progressão preserva uma decisão pedagógica consistente: cada aula introduz uma camada ou problema novo sobre um estado executável já compreendido.
 
@@ -619,16 +684,15 @@ A progressão preserva uma decisão pedagógica consistente: cada aula introduz 
 
 ### Prioridade alta
 
-1. **OpenAPI:** a API já possui operações suficientes para justificar documentação executável e exemplos de contrato.
-2. **Autenticação e autorização:** as rotas ainda não distinguem usuários nem permissões; isso deve ser introduzido antes de tratar o protótipo como aplicação exposta.
-3. **Segurança concorrente do estoque:** abordar perda de atualização e locking antes de uso multiusuário real.
+1. **Segurança concorrente do estoque:** abordar perda de atualização e locking antes de uso multiusuário real.
+2. **Evolução do domínio comercial:** introduzir clientes, colaboradores, vendas e itens de venda preservando coesão, histórico de preços e atomicidade.
 
 ### Prioridade média
 
 1. **Atividades autônomas:** algumas aulas combinam transferência e atividade orientada, mas nem sempre separam claramente o trabalho com apoio do trabalho individual.
 2. **Acessibilidade de diagramas:** manter explicações textuais próximas aos Mermaid.
 3. **Atualização visual da Aula 01:** substituir capturas históricas na trilha principal.
-4. **Coleção Postman versionada:** o roteiro existe, mas uma coleção revisada pode servir como artefato executável desde que não contenha segredos.
+4. **Manutenção do contrato:** incorporar a revisão do OpenAPI ao checklist de toda nova operação.
 
 ### Prioridade futura
 
@@ -636,7 +700,7 @@ A progressão preserva uma decisão pedagógica consistente: cada aula introduz 
 2. Observabilidade, logs estruturados e correlação de requisições.
 3. Empacotamento, implantação e configuração por ambiente.
 4. Concorrência em movimentações de estoque e controle de versão otimista.
-5. Estratégia de autenticação, autorização e auditoria.
+5. Estratégia de autenticação, autorização e auditoria, mantida fora do escopo imediato do curso.
 
 ---
 
@@ -654,14 +718,15 @@ A progressão preserva uma decisão pedagógica consistente: cada aula introduz 
 10. Atualizar versões, telas e recomendações de segurança antes de cada oferta anual.
 11. Não alterar silenciosamente contratos usados por materiais anteriores; mudanças como a paginação da Aula 08 devem ser anunciadas.
 12. Revisar esta análise sempre que uma aula, contrato HTTP ou versão estrutural do projeto mudar.
+13. Atualizar OpenAPI e coleção Postman sempre que uma operação HTTP for criada ou alterada.
 
 ## Parecer final
 
 As Aulas 00 a 02 atendem ao papel de fundação do curso. Elas não se limitam a procedimentos: apresentam modelos mentais, exigem evidências, incluem diagnóstico e preparam a transferência para um domínio escolhido pelo estudante.
 
-As Aulas 03 a 08 concretizam a progressão anunciada: domínio, persistência, transações, evolução de esquema, API REST e operações completas com consultas paginadas. A implementação acompanha a documentação e foi validada no PostgreSQL por testes de domínio, aplicação, persistência e HTTP.
+As Aulas 03 a 09 concretizam a progressão anunciada: domínio, persistência, transações, evolução de esquema, API REST, operações completas, consultas paginadas e documentação executável. A implementação acompanha a documentação e foi validada no PostgreSQL por testes de domínio, aplicação, persistência, HTTP e contrato OpenAPI.
 
-O material pode ser utilizado como base da oferta de 2026. As Aulas 00 a 08 atendem de forma consistente ao padrão definido, preservadas as melhorias futuras registradas neste documento. Os principais temas curriculares pendentes são OpenAPI, segurança de acesso, concorrência de estoque, Docker como objeto de estudo e implantação.
+O material pode ser utilizado como base da oferta de 2026. As Aulas 00 a 09 atendem de forma consistente ao padrão definido, preservadas as melhorias futuras registradas neste documento. Os próximos passos coerentes são a evolução do domínio comercial, a segurança concorrente do estoque, Docker como objeto de estudo, observabilidade e implantação. Autenticação e autorização permanecem deliberadamente fora do escopo imediato.
 
 ---
 

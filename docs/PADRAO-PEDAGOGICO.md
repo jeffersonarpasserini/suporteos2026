@@ -56,6 +56,7 @@ Exemplo:
 | adicionar um changeset Liquibase | migração incremental, estado desejado, rastreabilidade e execução idempotente |
 | criar variável de ambiente | separação entre configuração e código, precedência e proteção de segredos |
 | criar um contêiner | imagem, camada, processo, isolamento, rede e persistência de dados |
+| publicar um contrato OpenAPI | interface explícita, schemas, semântica HTTP, interoperabilidade e evolução compatível |
 
 ### 4. Código como argumento técnico
 
@@ -156,6 +157,7 @@ Inclua somente os tópicos pertinentes à aula, como:
 - autenticação e autorização;
 - menor privilégio;
 - logs sem dados sensíveis;
+- exposição consciente de documentação, contratos e endpoints técnicos;
 - dependências e origem de imagens;
 - transações e integridade do banco;
 - testes e análise estática.
@@ -196,6 +198,7 @@ Antes de criar a tag, confirme:
 - projeto compila e testes passam;
 - incremento pode ser demonstrado;
 - documentação corresponde ao código;
+- contratos executáveis e coleções de clientes HTTP correspondem às operações atuais;
 - `git diff --check` não aponta problemas;
 - não existem credenciais ou arquivos locais;
 - commit possui uma unidade lógica;
@@ -245,6 +248,8 @@ No Windows, substitua `./mvnw` por `.\mvnw.cmd`. O professor deve publicar a tag
 - [ ] Segurança não aparece apenas como observação final.
 - [ ] A atividade exige transferência para o tema do estudante.
 - [ ] A rubrica avalia conceito e prática.
+- [ ] Quando houver API, sucessos, erros e schemas estão documentados e verificáveis.
+- [ ] Artefatos importáveis, como coleções Postman, não contêm segredos nem dados reais.
 - [ ] O ponto de quebra é executável e recuperável.
 - [ ] As referências oficiais foram verificadas.
 
