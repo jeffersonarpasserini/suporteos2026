@@ -33,6 +33,7 @@ O sistema será construído incrementalmente. Cada aula termina em um estado exe
 | 08 | CRUD completo, estoque, filtros e paginação | [Abrir Aula 08](docs/08aula/08aula.md) |
 | 09 | OpenAPI: contrato executável e documentação da API | [Abrir Aula 09](docs/09aula/09aula.md) |
 | 10 | Pessoas, clientes, colaboradores, fornecedores e vendas | [Abrir Aula 10](docs/10aula/10aula.md) |
+| 11 | Concorrência de estoque, isolamento e locking | [Abrir Aula 11](docs/11aula/11aula.md) |
 
 ## Organização pedagógica
 
@@ -100,6 +101,8 @@ Os contratos usam DTOs, validação de entrada e respostas de erro padronizadas.
 A [Aula 09](docs/09aula/09aula.md) publica o contrato OpenAPI em `/v3/api-docs` e `/v3/api-docs.yaml`. Durante o desenvolvimento, a documentação interativa está disponível em `/swagger-ui.html`; no profile `prod`, sua exposição permanece desabilitada por decisão explícita.
 
 A [Aula 10](docs/10aula/10aula.md) evolui o domínio com CPF, CNPJ, papéis compostos, vendas, itens, preço histórico e baixa transacional de estoque, deixando explícita a ligação com uma futura implementação de contas e perfis de acesso.
+
+A [Aula 11](docs/11aula/11aula.md) trata alterações simultâneas do estoque. Os produtos são bloqueados no PostgreSQL com `PESSIMISTIC_WRITE`; vendas com vários itens adquirem os locks em ordem de identificador. A estratégia protege finalizações, entradas e saídas manuais sem transformar consultas comuns em operações bloqueantes.
 
 Para testar todo o fluxo em um cliente externo, importe no Postman a coleção [Suporte OS 2026 - API completa](postman/Suporte-OS.postman_collection.json). Ela usa variáveis próprias, captura automaticamente os identificadores cadastrados e pode ser executada na ordem das pastas pelo Collection Runner.
 

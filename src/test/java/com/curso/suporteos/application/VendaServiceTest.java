@@ -11,6 +11,12 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -64,6 +70,70 @@ class VendaServiceTest {
         assertEquals(StatusVenda.ABERTA, vendaService.buscarPorId(venda.getId()).getStatus());
     }
 
+    @Test
+    void deveImpedirVendaAcimaDoSaldoEmFinalizacoesConcorrentes() throws Exception {
+        Participantes participantes = criarParticipantes();
+        Produto produto = criarProduto("VENDA-CONCORRENTE-" + System.nanoTime(), "5.000");
+        Venda primeira = criarVendaComItem(participantes, produto, "4.000");
+        Venda segunda = criarVendaComItem(participantes, produto, "4.000");
+
+        CountDownLatch inicioSimultaneo = new CountDownLatch(1);
+
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            Future<ResultadoFinalizacao> primeiroResultado = executor.submit(
+                    () -> finalizarAposSinal(primeira.getId(), inicioSimultaneo));
+            Future<ResultadoFinalizacao> segundoResultado = executor.submit(
+                    () -> finalizarAposSinal(segunda.getId(), inicioSimultaneo));
+
+            inicioSimultaneo.countDown();
+
+            List<ResultadoFinalizacao> resultados = List.of(
+                    primeiroResultado.get(10, TimeUnit.SECONDS),
+                    segundoResultado.get(10, TimeUnit.SECONDS));
+
+            assertEquals(1, resultados.stream().filter(ResultadoFinalizacao::sucesso).count());
+            assertEquals(1, resultados.stream().filter(resultado -> !resultado.sucesso()).count());
+            assertTrue(resultados.stream()
+                    .filter(resultado -> !resultado.sucesso())
+                    .allMatch(resultado -> "Saldo de estoque insuficiente".equals(resultado.mensagem())));
+        }
+
+        assertEquals(new BigDecimal("1.000"),
+                produtoRepository.findById(produto.getId()).orElseThrow().getSaldoEstoque());
+
+        List<StatusVenda> estados = List.of(
+                vendaService.buscarPorId(primeira.getId()).getStatus(),
+                vendaService.buscarPorId(segunda.getId()).getStatus());
+        assertEquals(1, estados.stream().filter(StatusVenda.FINALIZADA::equals).count());
+        assertEquals(1, estados.stream().filter(StatusVenda.ABERTA::equals).count());
+    }
+
+    private Venda criarVendaComItem(
+            Participantes participantes,
+            Produto produto,
+            String quantidade) {
+        Venda venda = vendaService.cadastrar(
+                participantes.cliente().getId(),
+                participantes.vendedor().getId());
+        vendaService.adicionarItem(
+                venda.getId(),
+                produto.getId(),
+                new BigDecimal(quantidade));
+        return venda;
+    }
+
+    private ResultadoFinalizacao finalizarAposSinal(
+            Long vendaId,
+            CountDownLatch inicioSimultaneo) throws InterruptedException {
+        inicioSimultaneo.await();
+        try {
+            vendaService.finalizar(vendaId);
+            return new ResultadoFinalizacao(true, null);
+        } catch (IllegalArgumentException exception) {
+            return new ResultadoFinalizacao(false, exception.getMessage());
+        }
+    }
+
     private Participantes criarParticipantes() {
         long semente = System.nanoTime();
         String sufixo = String.valueOf(semente);
@@ -106,4 +176,6 @@ class VendaServiceTest {
     }
 
     private record Participantes(Cliente cliente, Colaborador vendedor) { }
+
+    private record ResultadoFinalizacao(boolean sucesso, String mensagem) { }
 }

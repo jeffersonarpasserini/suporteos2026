@@ -5,6 +5,7 @@ import com.curso.suporteos.domain.Produto;
 import com.curso.suporteos.repository.FornecedorRepository;
 import com.curso.suporteos.repository.GrupoProdutoRepository;
 import com.curso.suporteos.repository.ProdutoRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,6 +33,9 @@ class ProdutoServiceUnitTest {
 
     @Mock
     private FornecedorRepository fornecedorRepository;
+
+    @Mock
+    private EntityManager entityManager;
 
     @InjectMocks
     private ProdutoService service;

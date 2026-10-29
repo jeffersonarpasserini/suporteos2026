@@ -7,6 +7,8 @@ import com.curso.suporteos.domain.Status;
 import com.curso.suporteos.repository.FornecedorRepository;
 import com.curso.suporteos.repository.GrupoProdutoRepository;
 import com.curso.suporteos.repository.ProdutoRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -24,14 +26,17 @@ public class ProdutoService {
     private final ProdutoRepository produtoRepository;
     private final GrupoProdutoRepository grupoRepository;
     private final FornecedorRepository fornecedorRepository;
+    private final EntityManager entityManager;
 
     public ProdutoService(
             ProdutoRepository produtoRepository,
             GrupoProdutoRepository grupoRepository,
-            FornecedorRepository fornecedorRepository) {
+            FornecedorRepository fornecedorRepository,
+            EntityManager entityManager) {
         this.produtoRepository = produtoRepository;
         this.grupoRepository = grupoRepository;
         this.fornecedorRepository = fornecedorRepository;
+        this.entityManager = entityManager;
     }
 
     @Transactional
@@ -68,6 +73,7 @@ public class ProdutoService {
     @Transactional
     public Produto receberEstoque(Long id, BigDecimal quantidade) {
         Produto produto = buscarEntidade(id);
+        entityManager.refresh(produto, LockModeType.PESSIMISTIC_WRITE);
         produto.receberEstoque(quantidade);
         return produto;
     }
@@ -75,6 +81,7 @@ public class ProdutoService {
     @Transactional
     public Produto retirarEstoque(Long id, BigDecimal quantidade) {
         Produto produto = buscarEntidade(id);
+        entityManager.refresh(produto, LockModeType.PESSIMISTIC_WRITE);
         produto.retirarEstoque(quantidade);
         return produto;
     }
