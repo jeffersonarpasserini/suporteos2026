@@ -11,5 +11,8 @@ public record TokenResponse(
         String tokenType,
         @Schema(description = "Duração do token em segundos", example = "1800")
         long expiresIn,
-        Instant expiresAt) {
+        Instant expiresAt,
+        @Schema(description = "Token opaco de uso único para renovação")
+        String refreshToken,
+        Instant refreshTokenExpiresAt) {
 }

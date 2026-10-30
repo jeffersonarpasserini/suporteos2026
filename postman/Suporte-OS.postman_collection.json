@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "0a09c5d0-9f63-4b31-9eef-202609290009",
     "name": "Suporte OS 2026 - API completa",
-    "description": "Coleção executável das APIs desenvolvidas até a Aula 14. A pasta 02 autentica o administrador inicial, cria uma conta OPERADOR, comprova o 403 e salva o JWT operacional; as demais requisições herdam autenticação Bearer.",
+    "description": "Coleção executável das APIs desenvolvidas até a Aula 16. A pasta 02 autentica o administrador inicial, cria uma conta OPERADOR e exercita autorização, rotação do refresh token e logout; as demais requisições demonstram que o JWT de acesso já emitido continua válido até sua própria expiração.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -33,6 +33,11 @@
     },
     {
       "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
       "value": "",
       "type": "string"
     },
@@ -219,8 +224,8 @@
       ]
     },
     {
-      "name": "02 - Autorização e conta OPERADOR",
-      "description": "O administrador inicial vem das variáveis de ambiente. Seu JWT cria a conta OPERADOR; depois o token operacional substitui o administrativo.",
+      "name": "02 - Autorização e ciclo de tokens",
+      "description": "O administrador inicial vem das variáveis de ambiente. Seu JWT cria a conta OPERADOR; depois o par de tokens operacional é renovado, revogado e testado.",
       "item": [
         {
           "name": "Login do administrador e salvar JWT",
@@ -234,6 +239,7 @@
                   "if (pm.response.code === 200) {",
                   "    const body = pm.response.json();",
                   "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.refreshToken);",
                   "}"
                 ]
               }
@@ -338,7 +344,10 @@
                   "    pm.expect(body.tokenType).to.eql('Bearer');",
                   "    pm.expect(body.accessToken.split('.')).to.have.lengthOf(3);",
                   "});",
-                  "if (pm.response.code === 200) pm.collectionVariables.set('accessToken', body.accessToken);"
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "}"
                 ]
               }
             }
@@ -383,6 +392,91 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('OPERADOR recebe 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Renovar o par de tokens",
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/autenticacao/refresh",
+            "description": "Troca o refresh token atual por um novo. O token anterior torna-se inutilizável."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Par renovado com 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.accessToken).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.refreshToken).to.be.a('string').and.not.empty;",
+                  "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout da sessão atual",
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/autenticacao/logout",
+            "description": "Revoga toda a família da sessão. A resposta não revela se o token existia."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Logout concluído com 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh revogado deve falhar",
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/autenticacao/refresh",
+            "description": "Comprova que o logout impede a renovação, embora o access token atual ainda possa ser aceito até expirar."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Refresh revogado recebe 401', function () { pm.response.to.have.status(401); });"
                 ]
               }
             }

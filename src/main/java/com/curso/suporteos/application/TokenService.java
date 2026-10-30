@@ -26,7 +26,7 @@ public class TokenService {
         this.clock = clock;
     }
 
-    public TokenAcesso emitir(Authentication authentication) {
+    public TokenAcesso emitir(Authentication authentication, String sessaoId) {
         Instant emitidoEm = clock.instant();
         Instant expiraEm = emitidoEm.plus(properties.expiration());
         List<String> perfis = authentication.getAuthorities().stream()
@@ -42,6 +42,7 @@ public class TokenService {
                 .expiresAt(expiraEm)
                 .subject(authentication.getName())
                 .id(UUID.randomUUID().toString())
+                .claim("sid", sessaoId)
                 .claim("perfis", perfis)
                 .build();
 

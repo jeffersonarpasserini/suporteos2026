@@ -1,4 +1,4 @@
-# Revisão pedagógica e acompanhamento — Aulas 00 a 15
+# Revisão pedagógica e acompanhamento — Aulas 00 a 16
 
 [⬅ Voltar para o índice do curso](../README.md)
 
@@ -8,17 +8,17 @@
 
 | Item | Situação |
 |---|---|
-| Escopo | Aulas 00 a 15 |
+| Escopo | Aulas 00 a 16 |
 | Tipo de revisão | Pedagógica, técnica e longitudinal |
 | Última atualização | 29 de outubro de 2026 |
 | Java adotado | Java 21 |
 | Spring Boot adotado | 4.0.7 |
 | Projeto de referência | `suporteos2026` |
-| Estado técnico verificado | 79 testes aprovados no PostgreSQL 16; JaCoCo com 75,85% de linhas e 47,15% de branches |
+| Estado técnico verificado | 86 testes aprovados no PostgreSQL 16; JaCoCo com 77,24% de linhas e 49,72% de branches |
 
 ## Escopo da revisão
 
-Esta revisão avalia as dezesseis aulas atualmente existentes no curso:
+Esta revisão avalia as dezessete aulas atualmente existentes no curso:
 
 - Aula 00 — GitHub e início do projeto;
 - Aula 01 — configuração do ambiente;
@@ -35,7 +35,8 @@ Esta revisão avalia as dezesseis aulas atualmente existentes no curso:
 - Aula 12 — autenticação, proteção de senhas e Spring Security;
 - Aula 13 — JWT, Bearer Token e OAuth2 Resource Server;
 - Aula 14 — autorização, perfis e controle de acesso;
-- Aula 15 — testes de software, estratégia de testes e cobertura com JaCoCo.
+- Aula 15 — testes de software, estratégia de testes e cobertura com JaCoCo;
+- Aula 16 — ciclo de vida dos tokens, rotação, revogação e logout.
 
 A análise considera:
 
@@ -56,7 +57,7 @@ O [padrão pedagógico do curso](PADRAO-PEDAGOGICO.md) foi usado como referênci
 
 Foram confrontados:
 
-- os materiais Markdown das Aulas 00 a 15;
+- os materiais Markdown das Aulas 00 a 16;
 - o `README.md` e seu índice;
 - a estrutura Maven;
 - as classes de domínio, repositories, services, DTOs e controllers;
@@ -101,9 +102,11 @@ A Aula 14 converteu os perfis do token em authorities, aplicou políticas admini
 
 A Aula 15 classificou e aprofundou a suíte existente, acrescentou testes unitários parametrizados para `ContaAcesso` e configurou o JaCoCo como parte da fase `verify`. O marco possui 79 execuções aprovadas, 75,85% de linhas e 47,15% de branches cobertos.
 
+A Aula 16 aplicou essa estratégia ao ciclo renovável de autenticação. O Liquibase reconhece 36 changeSets e o `clean verify` conclui 86 testes, com 77,24% de linhas e 49,72% de branches cobertos.
+
 ---
 
-## Síntese das Aulas 00 a 15
+## Síntese das Aulas 00 a 16
 
 | Aula | Contexto e teoria | Prática e verificação | Transferência e avaliação | Situação geral |
 |---:|---|---|---|---|
@@ -123,10 +126,11 @@ A Aula 15 classificou e aprofundou a suíte existente, acrescentou testes unitá
 | 13 | JWT, claims, assinatura, Bearer Token, expiração e revogação | login, emissão HS256, Resource Server, OpenAPI, Postman e testes | laboratório completo, discussão de validade e transferência | Atende com débito editorial |
 | 14 | RBAC, menor privilégio, authorities, `401` e `403` | conversão de claims, políticas, `@PreAuthorize`, bootstrap e testes | diagramas, laboratório, transferência, rubrica e orientação docente | Atende |
 | 15 | verificação, níveis de teste, TDD, doubles, cobertura e risco | JUnit, Mockito, Spring Test, PostgreSQL, MockMvc, JaCoCo e portão no Maven | atividade TDD, transferência, rubrica, diagnóstico e orientação docente | Atende |
+| 16 | ciclo de sessão, expiração, rotação, replay e revogação | refresh opaco, hash, família, lock, Liquibase, endpoints, Postman e testes | diagramas, laboratório, transferência, rubrica e orientação docente | Atende |
 
 ### Conclusão da síntese
 
-As dezesseis aulas formam uma progressão coerente:
+As dezessete aulas formam uma progressão coerente:
 
 ```text
 Aula 00: preservar e publicar o trabalho
@@ -160,6 +164,8 @@ Aula 13: representar a autenticação com um token assinado e temporário
 Aula 14: autorizar cada operação conforme os perfis autenticados
     ↓
 Aula 15: avaliar a qualidade por testes em diferentes níveis e cobertura interpretada por risco
+    ↓
+Aula 16: renovar e encerrar sessões com limites temporais e detecção de reutilização
 ```
 
 Cada aula parte de um estado executável e acrescenta uma responsabilidade principal. A sequência evita misturar domínio, persistência, transação e HTTP antes que cada fundamento possa ser observado e testado isoladamente.
@@ -894,6 +900,37 @@ O `./mvnw clean verify` executa 79 testes sem falhas. O relatório mede 75,85% d
 
 ---
 
+## Aula 16 — Ciclo de vida dos tokens
+
+### O que a aula ensina
+
+A aula diferencia a credencial curta usada nas APIs da credencial de renovação, relaciona sessão stateless e estado persistido e formaliza três limites: expiração do access token, inatividade e expiração absoluta da família.
+
+Na prática, o estudante:
+
+- gera refresh tokens opacos com `SecureRandom`;
+- persiste somente o hash SHA-256;
+- modela gerações agrupadas por família;
+- rotaciona o refresh token a cada uso;
+- detecta reutilização e revoga toda a família;
+- usa lock pessimista para serializar renovações concorrentes;
+- preserva a revogação com `noRollbackFor` mesmo respondendo `401`;
+- revalida o estado da conta antes da renovação;
+- implementa logout local e global;
+- documenta o limite de um JWT já emitido após o logout;
+- testa fronteiras temporais e o fluxo HTTP completo;
+- atualiza Liquibase, OpenAPI e Postman.
+
+### Entregável e limite de escopo
+
+O marco entrega sessões renováveis dentro da arquitetura atual, sem transformar o projeto em Authorization Server, implementar OpenID Connect ou login social. A validação do access token continua local e stateless; portanto, a revogação do refresh token bloqueia renovações, mas o JWT já emitido permanece válido até `exp`.
+
+### Evidência e continuidade
+
+O `./mvnw clean verify` executa 86 testes sem falhas no PostgreSQL 16.15. O Liquibase reconhece 36 changeSets. O relatório JaCoCo mede 77,24% das linhas, 49,72% dos branches, 66,45% das instruções e 69,34% dos métodos. A continuidade adequada é auditar eventos e proteger a autenticação contra abuso na Aula 17.
+
+---
+
 ## O que cada aula acrescenta ao sistema
 
 | Aula | Pergunta respondida | Produto observável | O que fica para depois |
@@ -914,6 +951,7 @@ O `./mvnw clean verify` executa 79 testes sem falhas. O relatório mede 75,85% d
 | 13 | Como evitar o reenvio da senha em cada chamada? | login, JWT temporário e Bearer Token | autorização por perfil e refresh token |
 | 14 | Como limitar operações conforme a responsabilidade? | RBAC, `ROLE_*`, políticas, bootstrap e testes `401/403` | cobertura, refresh token e auditoria |
 | 15 | Como obter evidências sobre regras e integrações depois de uma mudança? | estratégia em camadas, JUnit, Mockito, JaCoCo e portão de cobertura | refresh token, auditoria e CI |
+| 16 | Como renovar e encerrar uma sessão sem tornar o access token permanente? | refresh opaco, rotação, expiração, revogação, logout e testes | auditoria, rate limiting e revogação imediata do access token |
 
 ---
 
@@ -946,6 +984,7 @@ A revisão inicial registrava conteúdos que deveriam aparecer nas aulas futuras
 | JWT | claims, assinatura, expiração, Bearer e revogação | Atendido na Aula 13 |
 | estratégia de testes | níveis, doubles, custo, isolamento e risco | Atendido na Aula 15 |
 | cobertura automatizada | JaCoCo, relatório, interpretação e portão Maven | Atendido na Aula 15 |
+| ciclo de sessão | refresh token, inatividade, expiração absoluta, rotação e revogação | Atendido na Aula 16 |
 | OpenAPI | contrato executável e documentação da API | Atendido na Aula 09 |
 | domínio comercial | clientes, colaboradores, vendas e itens | Atendido na Aula 10 |
 | documentos fiscais | formato, dígitos verificadores e limites | Atendido na Aula 10 |
@@ -969,7 +1008,7 @@ As limitações registradas na Aula 02 foram retomadas da seguinte forma:
 
 ---
 
-## Coerência da progressão até a Aula 15
+## Coerência da progressão até a Aula 16
 
 | Aula | Incremento principal | Dependência conceitual anterior |
 |---:|---|---|
@@ -989,6 +1028,7 @@ As limitações registradas na Aula 02 foram retomadas da seguinte forma:
 | 13 | JWT e OAuth2 Resource Server | autenticação com banco e cadeia de filtros compreendida |
 | 14 | RBAC, authorities e políticas de acesso | perfis presentes no JWT e casos de uso protegidos |
 | 15 | estratégia de testes e cobertura JaCoCo | sistema com regras e integrações diversas já verificadas |
+| 16 | ciclo renovável de tokens e revogação | JWT, autorização, transações, locking e estratégia de testes |
 
 A progressão preserva uma decisão pedagógica consistente: cada aula introduz uma camada ou problema novo sobre um estado executável já compreendido.
 
@@ -1018,8 +1058,8 @@ OpenAPI, Postman e Liquibase reaparecem em várias aulas de maneira intencional:
 
 ### Prioridade alta
 
-1. **Ciclo de vida do token:** planejar refresh token, revogação e logout antes de sessões renováveis.
-2. **Auditoria de segurança:** registrar eventos sensíveis sem expor credenciais ou tokens.
+1. **Auditoria de segurança:** registrar eventos sensíveis sem expor credenciais ou tokens.
+2. **Proteção contra abuso:** limitar tentativas e bloquear temporariamente sem permitir enumeração de contas.
 
 ### Prioridade média
 
@@ -1034,8 +1074,8 @@ OpenAPI, Postman e Liquibase reaparecem em várias aulas de maneira intencional:
 1. Docker como conteúdo, não apenas pré-requisito operacional.
 2. Observabilidade, logs estruturados e correlação de requisições.
 3. Empacotamento, implantação e configuração por ambiente.
-4. Refresh token, revogação e logout quando a trilha precisar estudar sessões renováveis.
-5. Auditoria de autenticação e das operações sensíveis.
+4. Auditoria de autenticação e das operações sensíveis.
+5. Política de retenção e limpeza de sessões encerradas.
 
 ---
 
@@ -1059,9 +1099,9 @@ OpenAPI, Postman e Liquibase reaparecem em várias aulas de maneira intencional:
 
 As Aulas 00 a 02 atendem ao papel de fundação do curso. Elas não se limitam a procedimentos: apresentam modelos mentais, exigem evidências, incluem diagnóstico e preparam a transferência para um domínio escolhido pelo estudante.
 
-As Aulas 03 a 09 concretizam a progressão técnica fundamental: domínio, persistência, transações, evolução de esquema, API REST, operações completas, consultas paginadas e documentação executável. As Aulas 10 e 11 ampliam o domínio comercial e demonstram que atomicidade e concorrência são problemas relacionados, mas diferentes. As Aulas 12 e 13 constroem autenticação em dois passos didáticos: primeiro credenciais e cadeia de filtros com HTTP Basic; depois emissão, assinatura, expiração e consumo de JWT. A Aula 14 completa o bloco ao transformar perfis em políticas de autorização observáveis. A Aula 15 consolida como essas responsabilidades são verificadas, distingue níveis de teste e introduz cobertura automatizada sem reduzir qualidade a uma porcentagem.
+As Aulas 03 a 09 concretizam a progressão técnica fundamental: domínio, persistência, transações, evolução de esquema, API REST, operações completas, consultas paginadas e documentação executável. As Aulas 10 e 11 ampliam o domínio comercial e demonstram que atomicidade e concorrência são problemas relacionados, mas diferentes. As Aulas 12 e 13 constroem autenticação em dois passos didáticos: primeiro credenciais e cadeia de filtros com HTTP Basic; depois emissão, assinatura, expiração e consumo de JWT. A Aula 14 completa o bloco ao transformar perfis em políticas de autorização observáveis. A Aula 15 consolida como essas responsabilidades são verificadas, distingue níveis de teste e introduz cobertura automatizada sem reduzir qualidade a uma porcentagem. A Aula 16 aplica esses fundamentos a sessões renováveis, combinando tempo, persistência, concorrência e tratamento de replay.
 
-O material pode ser utilizado como base da oferta de 2026. As Aulas 00 a 15 atendem de forma consistente ao padrão definido e cada uma preserva um recorte observável, verificável e transferível ao tema do estudante. A próxima aula coerente é ciclo de vida dos tokens: refresh token, validade absoluta, inatividade, rotação, revogação e logout. Permanecem como continuidade curricular auditoria, Docker, observabilidade e implantação.
+O material pode ser utilizado como base da oferta de 2026. As Aulas 00 a 16 atendem de forma consistente ao padrão definido e cada uma preserva um recorte observável, verificável e transferível ao tema do estudante. A próxima aula coerente é auditoria e proteção da autenticação. Permanecem como continuidade curricular Docker, observabilidade, integração contínua e implantação.
 
 ---
 

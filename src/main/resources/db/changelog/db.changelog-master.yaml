@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/changes/005-pessoas-clientes-vendas.yaml
   - include:
       file: db/changelog/changes/006-contas-acesso.yaml
+  - include:
+      file: db/changelog/changes/007-sessoes-refresh-token.yaml

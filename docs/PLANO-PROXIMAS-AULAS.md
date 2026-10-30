@@ -8,7 +8,7 @@
 
 Este documento registra a continuidade do curso após o marco `aula-13-jwt`. Ele funciona como planejamento curricular e evita que decisões sobre sequência, pré-requisitos e limites de escopo se percam entre a produção de uma aula e outra.
 
-> **Situação atual:** as Aulas 14 e 15 foram implementadas. As Aulas 16 a 22 permanecem como proposta de continuidade.
+> **Situação atual:** as Aulas 14 a 16 foram implementadas. As Aulas 17 a 22 permanecem como proposta de continuidade.
 
 A proposta ainda pode ser refinada durante a autoria. Uma aula somente passa a integrar definitivamente o curso depois que material, implementação, testes, commit e tag forem concluídos.
 
@@ -48,8 +48,8 @@ Aula 22 — consolidação e apresentação do projeto
 | Aula | Tema | Entrega principal | Tag sugerida |
 |---:|---|---|---|
 | 14 | Autorização e controle de acesso | operações protegidas por perfil | Implementada; tag `aula-14-autorizacao` |
-| 15 | Testes de software e cobertura | estratégia de testes e relatório JaCoCo | Implementada; tag prevista `aula-15-testes-cobertura` |
-| 16 | Ciclo de vida dos tokens | refresh token, rotação, revogação e logout | `aula-16-refresh-token` |
+| 15 | Testes de software e cobertura | estratégia de testes e relatório JaCoCo | Implementada; tag `aula-15-testes-cobertura` |
+| 16 | Ciclo de vida dos tokens | refresh token, rotação, revogação e logout | Implementada; tag prevista `aula-16-refresh-token` |
 | 17 | Auditoria e proteção da autenticação | tentativas, bloqueio, auditoria e limitação de requisições | `aula-17-auditoria-seguranca` |
 | 18 | Docker e conteinerização | aplicação e PostgreSQL executados com Docker Compose | `aula-18-docker` |
 | 19 | Observabilidade | health checks, logs, correlação e métricas | `aula-19-observabilidade` |
@@ -93,7 +93,7 @@ Não implementar ainda refresh token, revogação, auditoria persistente ou limi
 
 ## Aula 15 — Testes de software e cobertura
 
-> **Situação:** implementada no código e no material; aguardando commit e tag.
+> **Situação:** implementada, versionada e publicada na tag `aula-15-testes-cobertura`.
 
 ### Pergunta orientadora
 
@@ -128,6 +128,8 @@ Cobertura não será tratada como prova de ausência de defeitos. Testes de carg
 
 ## Aula 16 — Ciclo de vida dos tokens
 
+> **Situação:** implementada no código e no material; aguardando commit e tag.
+
 ### Pergunta orientadora
 
 > Como renovar uma autenticação sem manter um access token válido indefinidamente e como encerrar o acesso antes do vencimento absoluto?
@@ -156,6 +158,10 @@ Cobertura não será tratada como prova de ausência de defeitos. Testes de carg
 ### Limite de escopo
 
 Não transformar a aplicação em um Authorization Server completo nem introduzir login social. O objetivo é observar o ciclo de uma sessão renovável dentro do recorte didático atual.
+
+### Resultado implementado
+
+O projeto usa refresh token opaco de 256 bits e persiste somente seu hash SHA-256. Cada renovação mantém a família, preserva o limite absoluto e substitui o token anterior. A reutilização revoga toda a família; logout local e global impedem novas renovações. O teste também torna explícito que um access token já emitido continua válido até seu próprio `exp`.
 
 ---
 
