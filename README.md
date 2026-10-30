@@ -37,13 +37,14 @@ O sistema será construído incrementalmente. Cada aula termina em um estado exe
 | 12 | Autenticação, proteção de senhas e Spring Security | [Abrir Aula 12](docs/12aula/12aula.md) |
 | 13 | JWT, Bearer Token e Resource Server | [Abrir Aula 13](docs/13aula/13aula.md) |
 | 14 | Autorização, perfis e controle de acesso | [Abrir Aula 14](docs/14aula/14aula.md) |
+| 15 | Testes de software e cobertura com JaCoCo | [Abrir Aula 15](docs/15aula/15aula.md) |
 
 ## Organização pedagógica
 
 As aulas combinam fundamentação conceitual, implementação incremental, evidências de execução, diagnóstico, atividade de transferência e avaliação. O material não deve apresentar código ou configuração como uma sequência isolada de procedimentos.
 
 - [Padrão pedagógico obrigatório das aulas](docs/PADRAO-PEDAGOGICO.md)
-- [Revisão pedagógica e acompanhamento das Aulas 00 a 14](docs/REVISAO-PEDAGOGICA-AULAS-00-14.md)
+- [Revisão pedagógica e acompanhamento das Aulas 00 a 15](docs/REVISAO-PEDAGOGICA-AULAS-00-15.md)
 - [Plano de continuidade das Aulas 14 a 22](docs/PLANO-PROXIMAS-AULAS.md)
 
 ## Projeto de referência
@@ -116,6 +117,8 @@ A [Aula 13](docs/13aula/13aula.md) substitui HTTP Basic por JWT. O endpoint `/ap
 
 A [Aula 14](docs/14aula/14aula.md) converte o claim `perfis` em authorities, diferencia `401` de `403` e aplica autorização para `OPERADOR` e `ADMINISTRADOR`. A criação e a gestão de contas, assim como exclusões, exigem perfil administrativo. Em banco vazio, o primeiro administrador é provisionado por variáveis de ambiente e o mecanismo permanece desativado por padrão.
 
+A [Aula 15](docs/15aula/15aula.md) organiza a estratégia de testes do sistema, compara testes unitários, de integração, persistência, API, segurança e concorrência, e configura o JaCoCo. O build passa a exigir pelo menos 70% de cobertura de linhas e 40% de branches, sem tratar essas métricas como prova isolada de qualidade.
+
 Para testar todo o fluxo em um cliente externo, importe no Postman a coleção [Suporte OS 2026 - API completa](postman/Suporte-OS.postman_collection.json). Ela autentica o administrador inicial, cria uma conta OPERADOR, demonstra o resultado `403`, captura o JWT operacional e o envia como Bearer nas chamadas protegidas. Os demais identificadores também são capturados automaticamente, permitindo a execução ordenada pelo Collection Runner.
 
 ## Executando os testes
@@ -133,6 +136,22 @@ No macOS ou Linux:
 ```bash
 ./mvnw test
 ```
+
+Para executar a suíte, gerar o relatório JaCoCo e aplicar os limites de cobertura:
+
+No Windows:
+
+```powershell
+.\mvnw.cmd clean verify
+```
+
+No macOS ou Linux:
+
+```bash
+./mvnw clean verify
+```
+
+O relatório HTML será gerado em `target/site/jacoco/index.html`. No marco da Aula 15, a suíte possui 79 execuções aprovadas, 75,85% de cobertura de linhas e 47,15% de branches.
 
 ## Histórico didático
 

@@ -8,7 +8,7 @@
 
 Este documento registra a continuidade do curso após o marco `aula-13-jwt`. Ele funciona como planejamento curricular e evita que decisões sobre sequência, pré-requisitos e limites de escopo se percam entre a produção de uma aula e outra.
 
-> **Situação atual:** a Aula 14 foi implementada. As Aulas 15 a 22 permanecem como proposta de continuidade.
+> **Situação atual:** as Aulas 14 e 15 foram implementadas. As Aulas 16 a 22 permanecem como proposta de continuidade.
 
 A proposta ainda pode ser refinada durante a autoria. Uma aula somente passa a integrar definitivamente o curso depois que material, implementação, testes, commit e tag forem concluídos.
 
@@ -47,8 +47,8 @@ Aula 22 — consolidação e apresentação do projeto
 
 | Aula | Tema | Entrega principal | Tag sugerida |
 |---:|---|---|---|
-| 14 | Autorização e controle de acesso | operações protegidas por perfil | Implementada; tag prevista `aula-14-autorizacao-perfis` |
-| 15 | Testes de software e cobertura | estratégia de testes e relatório JaCoCo | `aula-15-testes-cobertura` |
+| 14 | Autorização e controle de acesso | operações protegidas por perfil | Implementada; tag `aula-14-autorizacao` |
+| 15 | Testes de software e cobertura | estratégia de testes e relatório JaCoCo | Implementada; tag prevista `aula-15-testes-cobertura` |
 | 16 | Ciclo de vida dos tokens | refresh token, rotação, revogação e logout | `aula-16-refresh-token` |
 | 17 | Auditoria e proteção da autenticação | tentativas, bloqueio, auditoria e limitação de requisições | `aula-17-auditoria-seguranca` |
 | 18 | Docker e conteinerização | aplicação e PostgreSQL executados com Docker Compose | `aula-18-docker` |
@@ -92,6 +92,8 @@ Não implementar ainda refresh token, revogação, auditoria persistente ou limi
 ---
 
 ## Aula 15 — Testes de software e cobertura
+
+> **Situação:** implementada no código e no material; aguardando commit e tag.
 
 ### Pergunta orientadora
 
