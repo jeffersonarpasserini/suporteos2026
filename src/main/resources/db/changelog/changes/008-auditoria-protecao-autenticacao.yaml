@@ -1,0 +1,142 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-01-create-protecao-autenticacao
+      author: curso-spring-2026
+      comment: Controla falhas consecutivas por hash do login sem persistir o identificador original.
+      changes:
+        - createTable:
+            tableName: protecao_autenticacao
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_protecao_autenticacao
+                    nullable: false
+              - column:
+                  name: chave_login
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_protecao_autenticacao_chave
+              - column:
+                  name: falhas_consecutivas
+                  type: INTEGER
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: janela_iniciada_em
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: bloqueada_ate
+                  type: TIMESTAMP WITH TIME ZONE
+        - sql:
+            sql: >
+              ALTER TABLE protecao_autenticacao
+              ADD CONSTRAINT ck_protecao_autenticacao_falhas
+              CHECK (falhas_consecutivas >= 0)
+      rollback:
+        - sql:
+            sql: >
+              ALTER TABLE protecao_autenticacao
+              DROP CONSTRAINT ck_protecao_autenticacao_falhas
+        - dropTable:
+            tableName: protecao_autenticacao
+
+  - changeSet:
+      id: 008-02-create-evento-seguranca
+      author: curso-spring-2026
+      comment: Mantém uma trilha estruturada sem senhas, tokens ou login em texto aberto.
+      changes:
+        - createTable:
+            tableName: evento_seguranca
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_evento_seguranca
+                    nullable: false
+              - column:
+                  name: tipo
+                  type: VARCHAR(40)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ocorrido_em
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ator_conta_id
+                  type: BIGINT
+              - column:
+                  name: alvo_conta_id
+                  type: BIGINT
+              - column:
+                  name: identificador_hash
+                  type: VARCHAR(64)
+              - column:
+                  name: endereco_origem
+                  type: VARCHAR(45)
+        - sql:
+            sql: >
+              ALTER TABLE evento_seguranca
+              ADD CONSTRAINT ck_evento_seguranca_tipo
+              CHECK (tipo IN
+              ('LOGIN_SUCESSO', 'LOGIN_FALHA', 'LOGIN_RECUSADO_BLOQUEIO',
+              'BLOQUEIO_TEMPORARIO_ATIVADO', 'CONTA_CRIADA', 'SENHA_ALTERADA',
+              'PERFIS_ALTERADOS', 'STATUS_ALTERADO', 'REFRESH_SUCESSO',
+              'REFRESH_FALHA', 'LOGOUT', 'LOGOUT_GLOBAL'))
+      rollback:
+        - dropTable:
+            tableName: evento_seguranca
+
+  - changeSet:
+      id: 008-03-index-evento-seguranca
+      author: curso-spring-2026
+      comment: Acelera consultas cronológicas por tipo, ator e alvo.
+      changes:
+        - createIndex:
+            tableName: evento_seguranca
+            indexName: idx_evento_seguranca_tipo_data
+            columns:
+              - column:
+                  name: tipo
+              - column:
+                  name: ocorrido_em
+                  descending: true
+        - createIndex:
+            tableName: evento_seguranca
+            indexName: idx_evento_seguranca_ator_data
+            columns:
+              - column:
+                  name: ator_conta_id
+              - column:
+                  name: ocorrido_em
+                  descending: true
+        - createIndex:
+            tableName: evento_seguranca
+            indexName: idx_evento_seguranca_alvo_data
+            columns:
+              - column:
+                  name: alvo_conta_id
+              - column:
+                  name: ocorrido_em
+                  descending: true
+      rollback:
+        - dropIndex:
+            tableName: evento_seguranca
+            indexName: idx_evento_seguranca_alvo_data
+        - dropIndex:
+            tableName: evento_seguranca
+            indexName: idx_evento_seguranca_ator_data
+        - dropIndex:
+            tableName: evento_seguranca
+            indexName: idx_evento_seguranca_tipo_data

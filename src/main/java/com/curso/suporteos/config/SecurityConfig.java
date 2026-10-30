@@ -20,7 +20,8 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 @EnableConfigurationProperties({
         AdministradorInicialProperties.class,
-        RefreshTokenProperties.class
+        RefreshTokenProperties.class,
+        ProtecaoAutenticacaoProperties.class
 })
 public class SecurityConfig {
 
@@ -71,6 +72,8 @@ public class SecurityConfig {
                                 "/api/autenticacao/logout")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/contas-acesso")
+                        .hasRole("ADMINISTRADOR")
+                        .requestMatchers("/api/auditoria-seguranca/**")
                         .hasRole("ADMINISTRADOR")
                         .requestMatchers(
                                 "/api/contas-acesso/*/perfis",

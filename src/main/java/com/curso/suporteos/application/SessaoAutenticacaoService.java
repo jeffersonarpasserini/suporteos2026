@@ -4,6 +4,7 @@ import com.curso.suporteos.config.RefreshTokenProperties;
 import com.curso.suporteos.domain.ContaAcesso;
 import com.curso.suporteos.domain.MotivoRevogacaoRefreshToken;
 import com.curso.suporteos.domain.SessaoRefreshToken;
+import com.curso.suporteos.domain.TipoEventoSeguranca;
 import com.curso.suporteos.repository.ContaAcessoRepository;
 import com.curso.suporteos.repository.SessaoRefreshTokenRepository;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,6 +32,7 @@ public class SessaoAutenticacaoService {
     private final ContaAcessoRepository contaRepository;
     private final TokenService tokenService;
     private final RefreshTokenProperties properties;
+    private final AuditoriaSegurancaService auditoriaService;
     private final Clock clock;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -39,11 +41,13 @@ public class SessaoAutenticacaoService {
             ContaAcessoRepository contaRepository,
             TokenService tokenService,
             RefreshTokenProperties properties,
+            AuditoriaSegurancaService auditoriaService,
             Clock clock) {
         this.sessaoRepository = sessaoRepository;
         this.contaRepository = contaRepository;
         this.tokenService = tokenService;
         this.properties = properties;
+        this.auditoriaService = auditoriaService;
         this.clock = clock;
     }
 
@@ -62,29 +66,51 @@ public class SessaoAutenticacaoService {
         String hash = calcularHash(refreshToken);
         SessaoRefreshToken sessao = sessaoRepository
                 .buscarPorHashParaAtualizacao(hash)
-                .orElseThrow(RefreshTokenInvalidoException::new);
+                .orElseThrow(() -> {
+                    auditoriaService.registrar(
+                            TipoEventoSeguranca.REFRESH_FALHA,
+                            null,
+                            null,
+                            null,
+                            null);
+                    return new RefreshTokenInvalidoException();
+                });
         Instant agora = clock.instant();
 
         validarSessaoParaRenovacao(sessao, agora);
         sessao.marcarUtilizada(agora);
 
         Authentication authentication = criarAuthentication(sessao.getConta());
-        return emitirPar(
+        TokensAutenticacao tokens = emitirPar(
                 sessao.getConta(),
                 authentication,
                 sessao.getFamiliaId(),
                 agora,
                 sessao.getExpiraEm());
+        auditoriaService.registrar(
+                TipoEventoSeguranca.REFRESH_SUCESSO,
+                sessao.getConta().getId(),
+                sessao.getConta().getId(),
+                null,
+                null);
+        return tokens;
     }
 
     @Transactional
     public void encerrar(String refreshToken) {
         String hash = calcularHash(refreshToken);
-        sessaoRepository.buscarPorHashParaAtualizacao(hash).ifPresent(sessao ->
+        sessaoRepository.buscarPorHashParaAtualizacao(hash).ifPresent(sessao -> {
                 sessaoRepository.revogarFamilia(
                         sessao.getFamiliaId(),
                         clock.instant(),
-                        MotivoRevogacaoRefreshToken.LOGOUT));
+                        MotivoRevogacaoRefreshToken.LOGOUT);
+                auditoriaService.registrar(
+                        TipoEventoSeguranca.LOGOUT,
+                        sessao.getConta().getId(),
+                        sessao.getConta().getId(),
+                        null,
+                        null);
+        });
     }
 
     @Transactional
@@ -95,6 +121,12 @@ public class SessaoAutenticacaoService {
                 conta.getId(),
                 clock.instant(),
                 MotivoRevogacaoRefreshToken.LOGOUT_GLOBAL);
+        auditoriaService.registrar(
+                TipoEventoSeguranca.LOGOUT_GLOBAL,
+                conta.getId(),
+                conta.getId(),
+                null,
+                null);
     }
 
     private TokensAutenticacao emitirPar(
@@ -124,6 +156,7 @@ public class SessaoAutenticacaoService {
             revogarERejeitar(sessao, agora, MotivoRevogacaoRefreshToken.REUTILIZACAO);
         }
         if (sessao.foiRevogada()) {
+            registrarFalhaRefresh(sessao);
             throw new RefreshTokenInvalidoException();
         }
         if (sessao.expirouAbsolutamente(agora)) {
@@ -145,7 +178,17 @@ public class SessaoAutenticacaoService {
             Instant agora,
             MotivoRevogacaoRefreshToken motivo) {
         sessaoRepository.revogarFamilia(sessao.getFamiliaId(), agora, motivo);
+        registrarFalhaRefresh(sessao);
         throw new RefreshTokenInvalidoException();
+    }
+
+    private void registrarFalhaRefresh(SessaoRefreshToken sessao) {
+        auditoriaService.registrar(
+                TipoEventoSeguranca.REFRESH_FALHA,
+                sessao.getConta().getId(),
+                sessao.getConta().getId(),
+                null,
+                null);
     }
 
     private Authentication criarAuthentication(ContaAcesso conta) {

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "0a09c5d0-9f63-4b31-9eef-202609290009",
     "name": "Suporte OS 2026 - API completa",
-    "description": "Coleção executável das APIs desenvolvidas até a Aula 16. A pasta 02 autentica o administrador inicial, cria uma conta OPERADOR e exercita autorização, rotação do refresh token e logout; as demais requisições demonstram que o JWT de acesso já emitido continua válido até sua própria expiração.",
+    "description": "Coleção executável das APIs desenvolvidas até a Aula 17. Além do ciclo de tokens, a pasta 11 demonstra resposta genérica de login e consulta administrativa da auditoria de segurança.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -33,6 +33,11 @@
     },
     {
       "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminAccessToken",
       "value": "",
       "type": "string"
     },
@@ -239,6 +244,7 @@
                   "if (pm.response.code === 200) {",
                   "    const body = pm.response.json();",
                   "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    pm.collectionVariables.set('adminAccessToken', body.accessToken);",
                   "    pm.collectionVariables.set('refreshToken', body.refreshToken);",
                   "}"
                 ]
@@ -1417,6 +1423,69 @@
                 "exec": [
                   "pm.test('Grupo em uso protegido com 409', function () {",
                   "    pm.response.to.have.status(409);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "11 - Proteção e auditoria da autenticação",
+      "description": "Registra uma falha sem revelar se a conta existe e consulta o evento com o JWT administrativo salvo no início da coleção.",
+      "item": [
+        {
+          "name": "Login desconhecido usa resposta genérica",
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"conta.inexistente.postman\",\n  \"senha\": \"senha-incorreta-postman\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/autenticacao/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Falha recebe 401 genérico', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "    pm.expect(pm.response.json().message).to.eql('Login ou senha inválidos');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Administrador consulta falhas auditadas",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{adminAccessToken}}", "type": "string"}]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/auditoria-seguranca?tipo=LOGIN_FALHA&page=0&size=20"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Auditoria administrativa responde 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Resposta não expõe login, senha ou tokens', function () {",
+                  "    const texto = pm.response.text();",
+                  "    pm.expect(texto).not.to.include('conta.inexistente.postman');",
+                  "    pm.expect(texto).not.to.include('senha-incorreta-postman');",
+                  "    pm.expect(texto).not.to.include('refreshToken');",
                   "});"
                 ]
               }

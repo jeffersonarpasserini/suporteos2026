@@ -3,6 +3,7 @@ package com.curso.suporteos.api;
 import com.curso.suporteos.domain.ContaAcesso;
 import com.curso.suporteos.domain.Pessoa;
 import com.curso.suporteos.repository.ContaAcessoRepository;
+import com.curso.suporteos.repository.EventoSegurancaRepository;
 import com.curso.suporteos.repository.PessoaRepository;
 import com.curso.suporteos.repository.SessaoRefreshTokenRepository;
 import com.jayway.jsonpath.JsonPath;
@@ -48,6 +49,9 @@ class CicloTokenApiTest {
     private SessaoRefreshTokenRepository sessaoRepository;
 
     @Autowired
+    private EventoSegurancaRepository eventoRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -58,6 +62,7 @@ class CicloTokenApiTest {
 
     @AfterEach
     void limparCenario() {
+        eventoRepository.deleteAll();
         sessaoRepository.deleteAll();
         if (contaCriada != null) {
             contaRepository.deleteById(contaCriada.getId());

@@ -39,13 +39,14 @@ O sistema será construído incrementalmente. Cada aula termina em um estado exe
 | 14 | Autorização, perfis e controle de acesso | [Abrir Aula 14](docs/14aula/14aula.md) |
 | 15 | Testes de software e cobertura com JaCoCo | [Abrir Aula 15](docs/15aula/15aula.md) |
 | 16 | Ciclo de vida dos tokens: renovação, rotação e revogação | [Abrir Aula 16](docs/16aula/16aula.md) |
+| 17 | Auditoria e proteção da autenticação | [Abrir Aula 17](docs/17aula/17aula.md) |
 
 ## Organização pedagógica
 
 As aulas combinam fundamentação conceitual, implementação incremental, evidências de execução, diagnóstico, atividade de transferência e avaliação. O material não deve apresentar código ou configuração como uma sequência isolada de procedimentos.
 
 - [Padrão pedagógico obrigatório das aulas](docs/PADRAO-PEDAGOGICO.md)
-- [Revisão pedagógica e acompanhamento das Aulas 00 a 16](docs/REVISAO-PEDAGOGICA-AULAS-00-16.md)
+- [Revisão pedagógica e acompanhamento das Aulas 00 a 17](docs/REVISAO-PEDAGOGICA-AULAS-00-17.md)
 - [Plano de continuidade das Aulas 14 a 22](docs/PLANO-PROXIMAS-AULAS.md)
 
 ## Projeto de referência
@@ -85,12 +86,14 @@ Pessoa       1 ───── 0..1 Cliente
 Pessoa       1 ───── 0..1 Colaborador
 Pessoa       1 ───── 0..1 ContaAcesso 1 ───── N PerfilAcesso
 ContaAcesso  1 ─────── N SessaoRefreshToken
+login (hash) 1 ───── 0..1 ProtecaoAutenticacao
+Conta/evento 1 ─────── N EventoSeguranca
 Cliente      1 ─────── N Venda
 Colaborador  1 ─────── N Venda
 Venda        1 ─────── N ItemVenda N ─────── 1 Produto
 ```
 
-O fornecedor de um produto é opcional e possui CNPJ validado pelos dígitos verificadores. CPF pertence a `Pessoa`; `Cliente` e `Colaborador` são papéis por composição, sem herança. `ContaAcesso` mantém credenciais e perfis separados da função profissional. `ItemVenda` preserva quantidade e preço histórico. As classes estão no pacote `com.curso.suporteos.domain`, são mapeadas com JPA e preservam as regras de negócio. O Liquibase cria e versiona o esquema; o Hibernate apenas o valida. Os profiles `dev`, `test` e `prod` usam PostgreSQL, sem H2.
+O fornecedor de um produto é opcional e possui CNPJ validado pelos dígitos verificadores. CPF pertence a `Pessoa`; `Cliente` e `Colaborador` são papéis por composição, sem herança. `ContaAcesso` mantém credenciais e perfis separados da função profissional. `ItemVenda` preserva quantidade e preço histórico. Os IDs de ator e alvo de `EventoSeguranca` são valores históricos, sem chave estrangeira ou associação JPA, para que a evidência não dependa do ciclo de vida da conta. As classes estão no pacote `com.curso.suporteos.domain`, são mapeadas com JPA e preservam as regras de negócio. O Liquibase cria e versiona o esquema; o Hibernate apenas o valida. Os profiles `dev`, `test` e `prod` usam PostgreSQL, sem H2.
 
 ## API atual
 
@@ -103,7 +106,8 @@ Após iniciar a aplicação, estão disponíveis os cadastros, consultas por ID 
 - `http://localhost:8080/api/clientes`;
 - `http://localhost:8080/api/colaboradores`;
 - `http://localhost:8080/api/vendas`;
-- `http://localhost:8080/api/contas-acesso`.
+- `http://localhost:8080/api/contas-acesso`;
+- `http://localhost:8080/api/auditoria-seguranca`, exclusivo para administradores.
 
 Os contratos usam DTOs, validação de entrada e respostas de erro padronizadas. A [Aula 07](docs/07aula/07aula.md) contém um laboratório completo de testes com Postman. A [Aula 08](docs/08aula/08aula.md) acrescenta alteração, exclusão, status, movimentações de estoque, filtros, ordenação e paginação para grupos e produtos.
 
@@ -123,7 +127,9 @@ A [Aula 15](docs/15aula/15aula.md) organiza a estratégia de testes do sistema, 
 
 A [Aula 16](docs/16aula/16aula.md) acrescenta refresh tokens opacos armazenados apenas como hash, expiração por inatividade e absoluta, rotação de uso único, detecção de reutilização, revogação por família e logout local/global. O access token continua stateless e válido até seu próprio `exp`; a revogação impede novas renovações.
 
-Para testar todo o fluxo em um cliente externo, importe no Postman a coleção [Suporte OS 2026 - API completa](postman/Suporte-OS.postman_collection.json). Ela autentica o administrador inicial, cria uma conta OPERADOR, demonstra o resultado `403`, renova e revoga o par de tokens e comprova que o access token já emitido permanece válido até expirar. Os demais identificadores são capturados automaticamente, permitindo a execução ordenada pelo Collection Runner.
+A [Aula 17](docs/17aula/17aula.md) protege o login com janela de falhas e bloqueio temporário persistente, sem diferenciar externamente conta inexistente, senha incorreta ou conta temporariamente bloqueada. Eventos estruturados registram autenticação, renovação, logout e alterações administrativas sem armazenar senhas ou tokens; a consulta paginada de auditoria exige perfil `ADMINISTRADOR`.
+
+Para testar todo o fluxo em um cliente externo, importe no Postman a coleção [Suporte OS 2026 - API completa](postman/Suporte-OS.postman_collection.json). Ela autentica o administrador inicial, cria uma conta OPERADOR, demonstra o resultado `403`, renova e revoga o par de tokens, testa a resposta genérica do login e consulta a auditoria administrativa. Os demais identificadores e tokens são capturados automaticamente, permitindo a execução ordenada pelo Collection Runner.
 
 ## Executando os testes
 
@@ -155,7 +161,7 @@ No macOS ou Linux:
 ./mvnw clean verify
 ```
 
-O relatório HTML será gerado em `target/site/jacoco/index.html`. No estado preparado para o marco da Aula 16, a suíte possui 86 execuções aprovadas, 77,24% de cobertura de linhas e 49,72% de branches.
+O relatório HTML será gerado em `target/site/jacoco/index.html`. No estado preparado para o marco da Aula 17, a suíte possui 96 execuções aprovadas, 79,25% de cobertura de linhas e 53,01% de branches.
 
 ## Histórico didático
 

@@ -55,6 +55,7 @@ class OpenApiDocumentationTest {
                 .andExpect(jsonPath("$.paths['/api/autenticacao/refresh'].post").exists())
                 .andExpect(jsonPath("$.paths['/api/autenticacao/logout'].post").exists())
                 .andExpect(jsonPath("$.paths['/api/autenticacao/logout-todos'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/auditoria-seguranca'].get").exists())
                 .andExpect(jsonPath("$.paths['/api/vendas/{id}/itens'].post").exists())
                 .andExpect(jsonPath("$.paths['/api/vendas/{id}/finalizacao'].post").exists())
                 .andExpect(jsonPath("$.components.schemas.ProdutoResponse").exists())

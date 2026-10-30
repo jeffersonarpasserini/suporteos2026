@@ -39,11 +39,13 @@ public class ContaAcessoController {
     @Operation(summary = "Cadastrar conta", description = "Cria uma conta OPERADOR para uma pessoa ativa. Exige ADMINISTRADOR.")
     @PostMapping
     public ResponseEntity<ContaAcessoResponse> cadastrar(
+            Authentication authentication,
             @Valid @RequestBody ContaAcessoRequest request) {
         ContaAcesso conta = service.cadastrar(
                 request.pessoaId(),
                 request.login(),
-                request.senha());
+                request.senha(),
+                authentication.getName());
         return ResponseEntity
                 .created(URI.create("/api/contas-acesso/me"))
                 .body(mapper.toResponse(conta));

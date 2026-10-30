@@ -60,7 +60,7 @@ class PersistenciaJpaTest {
                 "SELECT COUNT(*) FROM databasechangelog",
                 Integer.class);
 
-        assertEquals(36, quantidade);
+        assertEquals(39, quantidade);
     }
 
     @Test

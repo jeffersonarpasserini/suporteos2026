@@ -1,0 +1,16 @@
+package com.curso.suporteos.domain;
+
+public enum TipoEventoSeguranca {
+    LOGIN_SUCESSO,
+    LOGIN_FALHA,
+    LOGIN_RECUSADO_BLOQUEIO,
+    BLOQUEIO_TEMPORARIO_ATIVADO,
+    CONTA_CRIADA,
+    SENHA_ALTERADA,
+    PERFIS_ALTERADOS,
+    STATUS_ALTERADO,
+    REFRESH_SUCESSO,
+    REFRESH_FALHA,
+    LOGOUT,
+    LOGOUT_GLOBAL
+}

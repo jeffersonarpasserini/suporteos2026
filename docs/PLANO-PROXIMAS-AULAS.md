@@ -8,7 +8,7 @@
 
 Este documento registra a continuidade do curso após o marco `aula-13-jwt`. Ele funciona como planejamento curricular e evita que decisões sobre sequência, pré-requisitos e limites de escopo se percam entre a produção de uma aula e outra.
 
-> **Situação atual:** as Aulas 14 a 16 foram implementadas. As Aulas 17 a 22 permanecem como proposta de continuidade.
+> **Situação atual:** as Aulas 14 a 17 foram implementadas. As Aulas 18 a 22 permanecem como proposta de continuidade.
 
 A proposta ainda pode ser refinada durante a autoria. Uma aula somente passa a integrar definitivamente o curso depois que material, implementação, testes, commit e tag forem concluídos.
 
@@ -49,8 +49,8 @@ Aula 22 — consolidação e apresentação do projeto
 |---:|---|---|---|
 | 14 | Autorização e controle de acesso | operações protegidas por perfil | Implementada; tag `aula-14-autorizacao` |
 | 15 | Testes de software e cobertura | estratégia de testes e relatório JaCoCo | Implementada; tag `aula-15-testes-cobertura` |
-| 16 | Ciclo de vida dos tokens | refresh token, rotação, revogação e logout | Implementada; tag prevista `aula-16-refresh-token` |
-| 17 | Auditoria e proteção da autenticação | tentativas, bloqueio, auditoria e limitação de requisições | `aula-17-auditoria-seguranca` |
+| 16 | Ciclo de vida dos tokens | refresh token, rotação, revogação e logout | Implementada; tag `aula-16-refresh-token` |
+| 17 | Auditoria e proteção da autenticação | tentativas, bloqueio e eventos estruturados | Implementada; tag prevista `aula-17-auditoria-seguranca` |
 | 18 | Docker e conteinerização | aplicação e PostgreSQL executados com Docker Compose | `aula-18-docker` |
 | 19 | Observabilidade | health checks, logs, correlação e métricas | `aula-19-observabilidade` |
 | 20 | Integração contínua | pipeline de build, testes, cobertura e imagem | `aula-20-integracao-continua` |
@@ -128,7 +128,7 @@ Cobertura não será tratada como prova de ausência de defeitos. Testes de carg
 
 ## Aula 16 — Ciclo de vida dos tokens
 
-> **Situação:** implementada no código e no material; aguardando commit e tag.
+> **Situação:** implementada, versionada e publicada na tag `aula-16-refresh-token`.
 
 ### Pergunta orientadora
 
@@ -167,6 +167,8 @@ O projeto usa refresh token opaco de 256 bits e persiste somente seu hash SHA-25
 
 ## Aula 17 — Auditoria e proteção da autenticação
 
+> **Situação:** implementada no código e no material; aguardando commit e tag.
+
 ### Pergunta orientadora
 
 > Como detectar abuso, investigar eventos de segurança e reduzir tentativas automatizadas contra a autenticação?
@@ -188,6 +190,14 @@ O projeto usa refresh token opaco de 256 bits e persiste somente seu hash SHA-25
 - auditar alteração de senha, perfis, bloqueio e revogação;
 - criar consultas administrativas protegidas;
 - testar os limites e a liberação após o período configurado.
+
+### Resultado implementado
+
+O login mantém uma proteção persistente identificada pelo hash SHA-256 do nome normalizado. Cinco falhas dentro de quinze minutos ativam um bloqueio de quinze minutos. Conta inexistente, senha incorreta e bloqueio recebem a mesma resposta externa. Eventos estruturados registram sucessos, falhas, bloqueios, refresh, logout e alterações administrativas sem armazenar senhas, access tokens ou refresh tokens. A consulta paginada exige perfil `ADMINISTRADOR`.
+
+### Limite de escopo
+
+O recurso não substitui rate limiting de borda, WAF, MFA ou detecção distribuída. A política por login ainda pode ser explorada para negação de serviço e não contém password spraying com muitos identificadores; esses riscos permanecem documentados para análise crítica.
 
 ---
 

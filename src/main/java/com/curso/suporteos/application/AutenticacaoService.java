@@ -11,20 +11,32 @@ public class AutenticacaoService {
 
     private final AuthenticationManager authenticationManager;
     private final SessaoAutenticacaoService sessaoService;
+    private final ProtecaoAutenticacaoService protecaoService;
 
     public AutenticacaoService(
             AuthenticationManager authenticationManager,
-            SessaoAutenticacaoService sessaoService) {
+            SessaoAutenticacaoService sessaoService,
+            ProtecaoAutenticacaoService protecaoService) {
         this.authenticationManager = authenticationManager;
         this.sessaoService = sessaoService;
+        this.protecaoService = protecaoService;
     }
 
-    public TokensAutenticacao autenticar(String login, String senha) {
+    public TokensAutenticacao autenticar(
+            String login,
+            String senha,
+            String enderecoOrigem) {
+        if (!protecaoService.permitirTentativa(login, enderecoOrigem)) {
+            throw new CredenciaisInvalidasException("Login ou senha inválidos");
+        }
         try {
             Authentication authentication = authenticationManager.authenticate(
                     UsernamePasswordAuthenticationToken.unauthenticated(login, senha));
-            return sessaoService.iniciar(authentication);
+            TokensAutenticacao tokens = sessaoService.iniciar(authentication);
+            protecaoService.registrarSucesso(login, enderecoOrigem);
+            return tokens;
         } catch (AuthenticationException exception) {
+            protecaoService.registrarFalha(login, enderecoOrigem);
             throw new CredenciaisInvalidasException("Login ou senha inválidos");
         }
     }
