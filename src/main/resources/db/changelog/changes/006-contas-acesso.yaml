@@ -1,0 +1,96 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-01-create-conta-acesso
+      author: curso-spring-2026
+      comment: Separa credenciais de acesso da identidade civil e dos papéis comerciais.
+      changes:
+        - createTable:
+            tableName: conta_acesso
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_conta_acesso
+                    nullable: false
+              - column:
+                  name: pessoa_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_conta_acesso_pessoa
+              - column:
+                  name: login
+                  type: VARCHAR(80)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: senha_hash
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: conta_acesso
+            baseColumnNames: pessoa_id
+            referencedTableName: pessoa
+            referencedColumnNames: id
+            constraintName: fk_conta_acesso_pessoa
+            onDelete: RESTRICT
+        - sql:
+            sql: >
+              CREATE UNIQUE INDEX uk_conta_acesso_login_lower
+              ON conta_acesso (LOWER(BTRIM(login)))
+        - sql:
+            sql: >
+              ALTER TABLE conta_acesso
+              ADD CONSTRAINT ck_conta_acesso_status
+              CHECK (status IN ('ATIVA', 'BLOQUEADA'))
+      rollback:
+        - dropTable:
+            tableName: conta_acesso
+
+  - changeSet:
+      id: 006-02-create-conta-acesso-perfil
+      author: curso-spring-2026
+      comment: Persiste perfis de autorização sem confundi-los com a função profissional.
+      changes:
+        - createTable:
+            tableName: conta_acesso_perfil
+            columns:
+              - column:
+                  name: conta_acesso_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: perfil
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: conta_acesso_perfil
+            columnNames: conta_acesso_id, perfil
+            constraintName: pk_conta_acesso_perfil
+        - addForeignKeyConstraint:
+            baseTableName: conta_acesso_perfil
+            baseColumnNames: conta_acesso_id
+            referencedTableName: conta_acesso
+            referencedColumnNames: id
+            constraintName: fk_conta_acesso_perfil_conta
+            onDelete: CASCADE
+        - sql:
+            sql: >
+              ALTER TABLE conta_acesso_perfil
+              ADD CONSTRAINT ck_conta_acesso_perfil
+              CHECK (perfil IN ('OPERADOR', 'ADMINISTRADOR'))
+      rollback:
+        - dropTable:
+            tableName: conta_acesso_perfil

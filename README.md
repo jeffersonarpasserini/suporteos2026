@@ -34,6 +34,7 @@ O sistema será construído incrementalmente. Cada aula termina em um estado exe
 | 09 | OpenAPI: contrato executável e documentação da API | [Abrir Aula 09](docs/09aula/09aula.md) |
 | 10 | Pessoas, clientes, colaboradores, fornecedores e vendas | [Abrir Aula 10](docs/10aula/10aula.md) |
 | 11 | Concorrência de estoque, isolamento e locking | [Abrir Aula 11](docs/11aula/11aula.md) |
+| 12 | Autenticação, proteção de senhas e Spring Security | [Abrir Aula 12](docs/12aula/12aula.md) |
 
 ## Organização pedagógica
 
@@ -70,19 +71,20 @@ Com a aplicação iniciada, acesse <http://localhost:8080/api/health>. A respost
 
 ## Modelo de domínio atual
 
-Na Aula 10, o modelo passou a representar também pessoas, papéis comerciais e vendas:
+O modelo atual também representa pessoas, papéis comerciais, vendas e contas de acesso:
 
 ```text
 GrupoProduto 1 ─────── N Produto
 Fornecedor   1 ─────── N Produto
 Pessoa       1 ───── 0..1 Cliente
 Pessoa       1 ───── 0..1 Colaborador
+Pessoa       1 ───── 0..1 ContaAcesso 1 ───── N PerfilAcesso
 Cliente      1 ─────── N Venda
 Colaborador  1 ─────── N Venda
 Venda        1 ─────── N ItemVenda N ─────── 1 Produto
 ```
 
-O fornecedor de um produto é opcional e possui CNPJ validado pelos dígitos verificadores. CPF pertence a `Pessoa`; `Cliente` e `Colaborador` são papéis por composição, sem herança. `ItemVenda` preserva quantidade e preço histórico. As classes estão no pacote `com.curso.suporteos.domain`, são mapeadas com JPA e preservam as regras de negócio. O Liquibase cria e versiona o esquema; o Hibernate apenas o valida. Os profiles `dev`, `test` e `prod` usam PostgreSQL, sem H2.
+O fornecedor de um produto é opcional e possui CNPJ validado pelos dígitos verificadores. CPF pertence a `Pessoa`; `Cliente` e `Colaborador` são papéis por composição, sem herança. `ContaAcesso` mantém credenciais e perfis separados da função profissional. `ItemVenda` preserva quantidade e preço histórico. As classes estão no pacote `com.curso.suporteos.domain`, são mapeadas com JPA e preservam as regras de negócio. O Liquibase cria e versiona o esquema; o Hibernate apenas o valida. Os profiles `dev`, `test` e `prod` usam PostgreSQL, sem H2.
 
 ## API atual
 
@@ -95,6 +97,7 @@ Após iniciar a aplicação, estão disponíveis os cadastros, consultas por ID 
 - `http://localhost:8080/api/clientes`;
 - `http://localhost:8080/api/colaboradores`;
 - `http://localhost:8080/api/vendas`.
+- `http://localhost:8080/api/contas-acesso`.
 
 Os contratos usam DTOs, validação de entrada e respostas de erro padronizadas. A [Aula 07](docs/07aula/07aula.md) contém um laboratório completo de testes com Postman. A [Aula 08](docs/08aula/08aula.md) acrescenta alteração, exclusão, status, movimentações de estoque, filtros, ordenação e paginação para grupos e produtos.
 
@@ -104,7 +107,9 @@ A [Aula 10](docs/10aula/10aula.md) evolui o domínio com CPF, CNPJ, papéis comp
 
 A [Aula 11](docs/11aula/11aula.md) trata alterações simultâneas do estoque. Os produtos são bloqueados no PostgreSQL com `PESSIMISTIC_WRITE`; vendas com vários itens adquirem os locks em ordem de identificador. A estratégia protege finalizações, entradas e saídas manuais sem transformar consultas comuns em operações bloqueantes.
 
-Para testar todo o fluxo em um cliente externo, importe no Postman a coleção [Suporte OS 2026 - API completa](postman/Suporte-OS.postman_collection.json). Ela usa variáveis próprias, captura automaticamente os identificadores cadastrados e pode ser executada na ordem das pastas pelo Collection Runner.
+A [Aula 12](docs/12aula/12aula.md) adiciona contas vinculadas a pessoas, hash BCrypt e autenticação HTTP Basic stateless. Health, documentação e o fluxo inicial de criação de pessoa e conta permanecem públicos para fins didáticos; as demais rotas exigem credencial. Esse bootstrap público está explicitamente documentado como provisório e não representa uma configuração pronta para produção.
+
+Para testar todo o fluxo em um cliente externo, importe no Postman a coleção [Suporte OS 2026 - API completa](postman/Suporte-OS.postman_collection.json). Ela cria a primeira conta didática, usa autenticação Basic nas chamadas protegidas, captura automaticamente os identificadores e pode ser executada na ordem das pastas pelo Collection Runner.
 
 ## Executando os testes
 
