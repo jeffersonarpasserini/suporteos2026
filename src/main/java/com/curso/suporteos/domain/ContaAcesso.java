@@ -79,6 +79,22 @@ public class ContaAcesso {
         this.status = StatusContaAcesso.ATIVA;
     }
 
+    public void substituirPerfis(Set<PerfilAcesso> novosPerfis) {
+        if (novosPerfis == null || novosPerfis.isEmpty()) {
+            throw new IllegalArgumentException("A conta deve possuir ao menos um perfil");
+        }
+        this.perfis.clear();
+        this.perfis.addAll(novosPerfis);
+    }
+
+    public void concederPerfil(PerfilAcesso perfil) {
+        this.perfis.add(Objects.requireNonNull(perfil, "Perfil é obrigatório"));
+    }
+
+    public boolean possuiPerfil(PerfilAcesso perfil) {
+        return perfis.contains(perfil);
+    }
+
     public boolean podeAutenticar() {
         return status == StatusContaAcesso.ATIVA
                 && pessoa.getStatus() == Status.ATIVO;

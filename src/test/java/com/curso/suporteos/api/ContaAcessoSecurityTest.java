@@ -2,7 +2,9 @@ package com.curso.suporteos.api;
 
 import com.jayway.jsonpath.JsonPath;
 import com.curso.suporteos.domain.ContaAcesso;
+import com.curso.suporteos.domain.PerfilAcesso;
 import com.curso.suporteos.domain.Pessoa;
+import com.curso.suporteos.domain.StatusContaAcesso;
 import com.curso.suporteos.repository.ContaAcessoRepository;
 import com.curso.suporteos.repository.PessoaRepository;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -75,9 +78,16 @@ class ContaAcessoSecurityTest {
 
     @Test
     void deveCadastrarContaArmazenandoHashSemExporSenha() throws Exception {
+        ContaAcesso administrador = salvarConta(
+                "administrador.cadastro",
+                SENHA,
+                PerfilAcesso.ADMINISTRADOR);
+        String tokenAdministrador = autenticar(administrador.getLogin(), SENHA);
         Pessoa pessoa = novaPessoa("cadastro");
 
         mockMvc.perform(post("/api/contas-acesso")
+                        .header(HttpHeaders.AUTHORIZATION,
+                                "Bearer " + tokenAdministrador)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -97,6 +107,87 @@ class ContaAcessoSecurityTest {
         assertNotEquals(SENHA, conta.getSenhaHash());
         assertTrue(conta.getSenhaHash().startsWith("{bcrypt}"));
         assertTrue(passwordEncoder.matches(SENHA, conta.getSenhaHash()));
+    }
+
+    @Test
+    void deveDiferenciarNaoAutenticadoDeOperadorSemPermissao() throws Exception {
+        Pessoa pessoa = novaPessoa("sem-permissao");
+        String corpo = """
+                {
+                  "pessoaId": %d,
+                  "login": "nova.conta",
+                  "senha": "%s"
+                }
+                """.formatted(pessoa.getId(), SENHA);
+
+        mockMvc.perform(post("/api/contas-acesso")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo))
+                .andExpect(status().isUnauthorized());
+
+        salvarConta("operador.limitado", SENHA);
+        String tokenOperador = autenticar("operador.limitado", SENHA);
+        mockMvc.perform(post("/api/contas-acesso")
+                        .header(HttpHeaders.AUTHORIZATION,
+                                "Bearer " + tokenOperador)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void administradorDeveAlterarPerfisEBloquearOutraConta() throws Exception {
+        ContaAcesso administrador = salvarConta(
+                "administrador.perfis",
+                SENHA,
+                PerfilAcesso.ADMINISTRADOR);
+        ContaAcesso operador = salvarConta("operador.gerenciado", SENHA);
+        String tokenAdministrador = autenticar(administrador.getLogin(), SENHA);
+
+        mockMvc.perform(put("/api/contas-acesso/{id}/perfis", operador.getId())
+                        .header(HttpHeaders.AUTHORIZATION,
+                                "Bearer " + tokenAdministrador)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"perfis":["OPERADOR","ADMINISTRADOR"]}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.perfis").isArray())
+                .andExpect(jsonPath("$.perfis.length()").value(2));
+
+        mockMvc.perform(put("/api/contas-acesso/{id}/status", operador.getId())
+                        .header(HttpHeaders.AUTHORIZATION,
+                                "Bearer " + tokenAdministrador)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"BLOQUEADA"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("BLOQUEADA"));
+
+        ContaAcesso contaAtualizada = contaRepository.findById(operador.getId())
+                .orElseThrow();
+        assertEquals(StatusContaAcesso.BLOQUEADA, contaAtualizada.getStatus());
+    }
+
+    @Test
+    void deveImpedirAdministradorDeBloquearAPropriaConta() throws Exception {
+        ContaAcesso administrador = salvarConta(
+                "administrador.protegido",
+                SENHA,
+                PerfilAcesso.ADMINISTRADOR);
+        String tokenAdministrador = autenticar(administrador.getLogin(), SENHA);
+
+        mockMvc.perform(put("/api/contas-acesso/{id}/status", administrador.getId())
+                        .header(HttpHeaders.AUTHORIZATION,
+                                "Bearer " + tokenAdministrador)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"BLOQUEADA"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(
+                        "O administrador não pode bloquear a própria conta"));
     }
 
     @Test
@@ -189,9 +280,22 @@ class ContaAcessoSecurityTest {
     }
 
     private ContaAcesso salvarConta(String login, String senha) {
+        return salvarConta(login, senha, PerfilAcesso.OPERADOR);
+    }
+
+    private ContaAcesso salvarConta(
+            String login,
+            String senha,
+            PerfilAcesso... perfis) {
         Pessoa pessoa = novaPessoa(login.replace('.', '-'));
-        return contaRepository.saveAndFlush(
-                new ContaAcesso(pessoa, login, passwordEncoder.encode(senha)));
+        ContaAcesso conta = new ContaAcesso(
+                pessoa,
+                login,
+                passwordEncoder.encode(senha));
+        for (PerfilAcesso perfil : perfis) {
+            conta.concederPerfil(perfil);
+        }
+        return contaRepository.saveAndFlush(conta);
     }
 
     private Pessoa novaPessoa(String identificador) {

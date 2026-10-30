@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Login e emissão do JWT",
+    "subtitle": "Da credencial enviada pelo cliente ao access token assinado pelo servidor",
+    "output": "docs/14aula/diagramas/login-jwt.html",
+    "viewBox": [1120, 860],
+    "animation": "none",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "validar-credenciais",
+        "label": "Validar credenciais",
+        "focus": ["cliente", "controller", "authService", "authManager", "userDetails", "postgres"],
+        "note": "O banco fornece a conta e o PasswordEncoder compara o hash sem recuperar a senha original."
+      },
+      {
+        "id": "emitir-token",
+        "label": "Emitir token",
+        "focus": ["authManager", "tokenService", "jwtEncoder", "authService", "controller", "cliente"],
+        "note": "Somente após a autenticação o servidor cria claims e assina o JWT."
+      }
+    ]
+  },
+  "participants": [
+    {"id": "cliente", "type": "external", "label": "Cliente", "sublabel": "Postman, web ou mobile"},
+    {"id": "controller", "type": "backend", "label": "Login API", "sublabel": "POST /api/autenticacao/login"},
+    {"id": "authService", "type": "backend", "label": "Auth Service", "sublabel": "coordena o caso de uso"},
+    {"id": "authManager", "type": "security", "label": "Auth Manager", "sublabel": "autentica credenciais"},
+    {"id": "userDetails", "type": "security", "label": "User Details", "sublabel": "carrega a conta"},
+    {"id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "conta, hash e perfis"},
+    {"id": "tokenService", "type": "security", "label": "TokenService", "sublabel": "monta os claims"},
+    {"id": "jwtEncoder", "type": "security", "label": "JwtEncoder", "sublabel": "assina com HS256"}
+  ],
+  "segments": [
+    {"from": 150, "to": 495, "label": "Autenticação"},
+    {"from": 515, "to": 760, "label": "Emissão do token"}
+  ],
+  "messages": [
+    {"id": "enviar-login", "from": "cliente", "to": "controller", "y": 185, "label": "login + senha", "variant": "emphasis"},
+    {"id": "iniciar-caso", "from": "controller", "to": "authService", "y": 230, "label": "autenticar(login, senha)", "variant": "default"},
+    {"id": "autenticar", "from": "authService", "to": "authManager", "y": 275, "label": "authenticate(credentials)", "variant": "security"},
+    {"id": "carregar-conta", "from": "authManager", "to": "userDetails", "y": 320, "label": "loadUserByUsername(login)", "variant": "security"},
+    {"id": "consultar-conta", "from": "userDetails", "to": "postgres", "y": 365, "label": "buscar conta e perfis", "variant": "default"},
+    {"id": "retornar-conta", "from": "postgres", "to": "userDetails", "y": 405, "label": "hash, status e perfis", "variant": "return"},
+    {"id": "detalhes-usuario", "from": "userDetails", "to": "authManager", "y": 445, "label": "UserDetails + authorities", "variant": "return"},
+    {"id": "autenticacao-ok", "from": "authManager", "to": "authService", "y": 490, "label": "Authentication autenticado", "variant": "return"},
+    {"id": "solicitar-token", "from": "authService", "to": "tokenService", "y": 545, "label": "emitir(authentication)", "variant": "security"},
+    {"id": "assinar-token", "from": "tokenService", "to": "jwtEncoder", "y": 590, "label": "assinar iss, sub, exp e perfis", "variant": "security"},
+    {"id": "jwt-assinado", "from": "jwtEncoder", "to": "tokenService", "y": 635, "label": "JWT assinado", "variant": "return"},
+    {"id": "token-acesso", "from": "tokenService", "to": "authService", "y": 675, "label": "TokenAcesso", "variant": "return"},
+    {"id": "resposta-login", "from": "authService", "to": "controller", "y": 715, "label": "accessToken + expiração", "variant": "return"},
+    {"id": "resposta-cliente", "from": "controller", "to": "cliente", "y": 755, "label": "200 TokenResponse", "variant": "return"}
+  ],
+  "activations": [
+    {"participant": "controller", "from": 180, "to": 760, "type": "backend"},
+    {"participant": "authService", "from": 225, "to": 720, "type": "backend"},
+    {"participant": "authManager", "from": 270, "to": 495, "type": "security"},
+    {"participant": "userDetails", "from": 315, "to": 450, "type": "security"},
+    {"participant": "postgres", "from": 360, "to": 410, "type": "database"},
+    {"participant": "tokenService", "from": 540, "to": 680, "type": "security"},
+    {"participant": "jwtEncoder", "from": 585, "to": 640, "type": "security"}
+  ],
+  "cards": [
+    {"dot": "emerald", "title": "Senha protegida", "items": ["A senha aberta existe somente durante a requisição", "O BCrypt compara a senha com o hash persistido", "O hash nunca aparece na resposta"]},
+    {"dot": "violet", "title": "Token controlado pelo servidor", "items": ["Os perfis vêm da conta autenticada", "O cliente não escolhe seus próprios claims", "A assinatura permite detectar alteração do token"]}
+  ]
+}

@@ -1,4 +1,4 @@
-# Revisão pedagógica e acompanhamento — Aulas 00 a 13
+# Revisão pedagógica e acompanhamento — Aulas 00 a 14
 
 [⬅ Voltar para o índice do curso](../README.md)
 
@@ -8,17 +8,17 @@
 
 | Item | Situação |
 |---|---|
-| Escopo | Aulas 00 a 13 |
+| Escopo | Aulas 00 a 14 |
 | Tipo de revisão | Pedagógica, técnica e longitudinal |
 | Última atualização | 29 de outubro de 2026 |
 | Java adotado | Java 21 |
 | Spring Boot adotado | 4.0.7 |
 | Projeto de referência | `suporteos2026` |
-| Estado técnico verificado | 67 testes aprovados no PostgreSQL 16 |
+| Estado técnico verificado | 71 testes aprovados no PostgreSQL 16 |
 
 ## Escopo da revisão
 
-Esta revisão avalia as quatorze aulas atualmente existentes no curso:
+Esta revisão avalia as quinze aulas atualmente existentes no curso:
 
 - Aula 00 — GitHub e início do projeto;
 - Aula 01 — configuração do ambiente;
@@ -33,7 +33,8 @@ Esta revisão avalia as quatorze aulas atualmente existentes no curso:
 - Aula 10 — pessoas, papéis, documentos fiscais, fornecedores e vendas;
 - Aula 11 — concorrência de estoque, isolamento transacional e locking;
 - Aula 12 — autenticação, proteção de senhas e Spring Security;
-- Aula 13 — JWT, Bearer Token e OAuth2 Resource Server.
+- Aula 13 — JWT, Bearer Token e OAuth2 Resource Server;
+- Aula 14 — autorização, perfis e controle de acesso.
 
 A análise considera:
 
@@ -54,7 +55,7 @@ O [padrão pedagógico do curso](PADRAO-PEDAGOGICO.md) foi usado como referênci
 
 Foram confrontados:
 
-- os materiais Markdown das Aulas 00 a 13;
+- os materiais Markdown das Aulas 00 a 14;
 - o `README.md` e seu índice;
 - a estrutura Maven;
 - as classes de domínio, repositories, services, DTOs e controllers;
@@ -95,9 +96,11 @@ Skipped: 0
 BUILD SUCCESS
 ```
 
+A Aula 14 converteu os perfis do token em authorities, aplicou políticas administrativas e acrescentou testes explícitos de `401` e `403`. A suíte passou a totalizar 71 testes.
+
 ---
 
-## Síntese das Aulas 00 a 13
+## Síntese das Aulas 00 a 14
 
 | Aula | Contexto e teoria | Prática e verificação | Transferência e avaliação | Situação geral |
 |---:|---|---|---|---|
@@ -115,10 +118,11 @@ BUILD SUCCESS
 | 11 | concorrência, isolamento, MVCC, locks e deadlock | locking pessimista e teste com duas transações | experimento, transferência, avaliação e diagnóstico | Atende |
 | 12 | identificação, autenticação, autorização, hash, salt e fator de trabalho | conta de acesso, BCrypt, `UserDetailsService`, HTTP Basic e testes de segurança | laboratório Postman, avaliação e marco verificável | Atende com débito editorial |
 | 13 | JWT, claims, assinatura, Bearer Token, expiração e revogação | login, emissão HS256, Resource Server, OpenAPI, Postman e testes | laboratório completo, discussão de validade e transferência | Atende com débito editorial |
+| 14 | RBAC, menor privilégio, authorities, `401` e `403` | conversão de claims, políticas, `@PreAuthorize`, bootstrap e testes | diagramas, laboratório, transferência, rubrica e orientação docente | Atende |
 
 ### Conclusão da síntese
 
-As quatorze aulas formam uma progressão coerente:
+As quinze aulas formam uma progressão coerente:
 
 ```text
 Aula 00: preservar e publicar o trabalho
@@ -148,6 +152,8 @@ Aula 11: proteger o estoque contra alterações simultâneas
 Aula 12: identificar e autenticar quem chama a API
     ↓
 Aula 13: representar a autenticação com um token assinado e temporário
+    ↓
+Aula 14: autorizar cada operação conforme os perfis autenticados
 ```
 
 Cada aula parte de um estado executável e acrescenta uma responsabilidade principal. A sequência evita misturar domínio, persistência, transação e HTTP antes que cada fundamento possa ser observado e testado isoladamente.
@@ -822,6 +828,36 @@ A suíte de 67 testes demonstra emissão, consumo e rejeição dos principais ca
 
 ---
 
+## Aula 14 — Autorização, perfis e controle de acesso
+
+### O que a aula ensina
+
+A aula transforma os perfis já persistidos e transportados no JWT em decisões reais de acesso. O estudante diferencia autenticação de autorização, interpreta `401` e `403`, estuda RBAC, menor privilégio, authorities e defesa em profundidade.
+
+Na prática, o estudante:
+
+- converte o claim `perfis` em authorities `ROLE_*`;
+- habilita segurança de métodos;
+- define políticas específicas antes das regras gerais;
+- reserva criação e gestão de contas ao administrador;
+- exige administrador para exclusões;
+- protege casos de uso com `@PreAuthorize`;
+- altera perfis e status de contas;
+- impede remoção ou bloqueio do último administrador ativo;
+- substitui o bootstrap público por provisionamento externo e desativado por padrão;
+- testa operações permitidas, `401`, `403` e invariantes administrativas;
+- lê e produz diagramas de sequência de login e autorização.
+
+### Entregável e limite de escopo
+
+O marco entrega controle de acesso para `OPERADOR` e `ADMINISTRADOR`, endpoints administrativos, administrador inicial configurável, OpenAPI e Postman atualizados e diagramas interativos. Não implementa permissões dinâmicas, ACL, refresh token, revogação, rate limiting ou auditoria persistente.
+
+### Evidência e continuidade
+
+A suíte passa a 71 testes. Os casos novos demonstram que ausência de autenticação produz `401`, perfil insuficiente produz `403`, administrador pode gerenciar contas e não pode bloquear a própria identidade. O próximo passo é consolidar a estratégia de testes e medir cobertura sem tratar percentual como sinônimo de qualidade.
+
+---
+
 ## O que cada aula acrescenta ao sistema
 
 | Aula | Pergunta respondida | Produto observável | O que fica para depois |
@@ -840,6 +876,7 @@ A suíte de 67 testes demonstra emissão, consumo e rejeição dos principais ca
 | 11 | Como evitar venda excessiva sob concorrência? | locking pessimista e teste simultâneo | autenticação |
 | 12 | Como comprovar a identidade de quem chama a API? | conta, BCrypt, Spring Security e HTTP Basic | token e autorização fina |
 | 13 | Como evitar o reenvio da senha em cada chamada? | login, JWT temporário e Bearer Token | autorização por perfil e refresh token |
+| 14 | Como limitar operações conforme a responsabilidade? | RBAC, `ROLE_*`, políticas, bootstrap e testes `401/403` | cobertura, refresh token e auditoria |
 
 ---
 
@@ -866,9 +903,9 @@ A revisão inicial registrava conteúdos que deveriam aparecer nas aulas futuras
 | exclusão | integridade e conflito de recurso em uso | Atendido na Aula 08 |
 | paginação e filtros | consulta no banco, limites e ordenação | Atendido na Aula 08 |
 | concorrência | isolamento, MVCC, locking e deadlock | Atendido na Aula 11 |
-| segurança | segredos, validação, credenciais e controles | Atendido transversalmente; aprofundado nas Aulas 12 e 13 |
+| segurança | segredos, validação, credenciais e controles | Atendido transversalmente; aprofundado nas Aulas 12 a 14 |
 | autenticação | identidade, senha e mecanismo de autenticação | Atendido nas Aulas 12 e 13 |
-| autorização | perfis e controle de acesso por operação | Preparado nas Aulas 12 e 13; aplicação das regras fica para a Aula 14 |
+| autorização | perfis e controle de acesso por operação | Atendido na Aula 14 |
 | JWT | claims, assinatura, expiração, Bearer e revogação | Atendido na Aula 13 |
 | OpenAPI | contrato executável e documentação da API | Atendido na Aula 09 |
 | domínio comercial | clientes, colaboradores, vendas e itens | Atendido na Aula 10 |
@@ -893,7 +930,7 @@ As limitações registradas na Aula 02 foram retomadas da seguinte forma:
 
 ---
 
-## Coerência da progressão até a Aula 13
+## Coerência da progressão até a Aula 14
 
 | Aula | Incremento principal | Dependência conceitual anterior |
 |---:|---|---|
@@ -911,6 +948,7 @@ As limitações registradas na Aula 02 foram retomadas da seguinte forma:
 | 11 | isolamento e locking de estoque | transações e fluxo de venda |
 | 12 | conta, BCrypt e autenticação HTTP Basic | identidade civil separada dos papéis comerciais |
 | 13 | JWT e OAuth2 Resource Server | autenticação com banco e cadeia de filtros compreendida |
+| 14 | RBAC, authorities e políticas de acesso | perfis presentes no JWT e casos de uso protegidos |
 
 A progressão preserva uma decisão pedagógica consistente: cada aula introduz uma camada ou problema novo sobre um estado executável já compreendido.
 
@@ -940,8 +978,8 @@ OpenAPI, Postman e Liquibase reaparecem em várias aulas de maneira intencional:
 
 ### Prioridade alta
 
-1. **Autorização por perfil:** aplicar regras diferentes a operador e administrador e testar a diferença entre `401 Unauthorized` e `403 Forbidden`.
-2. **Bootstrap seguro:** substituir o cadastro público provisório por um processo administrativo ou de inicialização controlada.
+1. **Estratégia de testes e cobertura:** consolidar os níveis de teste e introduzir JaCoCo sem transformar percentual em objetivo isolado.
+2. **Ciclo de vida do token:** planejar refresh token, revogação e logout antes de sessões renováveis.
 
 ### Prioridade média
 
@@ -981,9 +1019,9 @@ OpenAPI, Postman e Liquibase reaparecem em várias aulas de maneira intencional:
 
 As Aulas 00 a 02 atendem ao papel de fundação do curso. Elas não se limitam a procedimentos: apresentam modelos mentais, exigem evidências, incluem diagnóstico e preparam a transferência para um domínio escolhido pelo estudante.
 
-As Aulas 03 a 09 concretizam a progressão técnica fundamental: domínio, persistência, transações, evolução de esquema, API REST, operações completas, consultas paginadas e documentação executável. As Aulas 10 e 11 ampliam o domínio comercial e demonstram que atomicidade e concorrência são problemas relacionados, mas diferentes. As Aulas 12 e 13 constroem autenticação em dois passos didáticos: primeiro credenciais e cadeia de filtros com HTTP Basic; depois emissão, assinatura, expiração e consumo de JWT.
+As Aulas 03 a 09 concretizam a progressão técnica fundamental: domínio, persistência, transações, evolução de esquema, API REST, operações completas, consultas paginadas e documentação executável. As Aulas 10 e 11 ampliam o domínio comercial e demonstram que atomicidade e concorrência são problemas relacionados, mas diferentes. As Aulas 12 e 13 constroem autenticação em dois passos didáticos: primeiro credenciais e cadeia de filtros com HTTP Basic; depois emissão, assinatura, expiração e consumo de JWT. A Aula 14 completa o bloco ao transformar perfis em políticas de autorização observáveis.
 
-O material pode ser utilizado como base da oferta de 2026. As Aulas 00 a 13 atendem de forma consistente ao padrão definido e cada uma preserva um recorte observável, verificável e transferível ao tema do estudante. A próxima aula coerente é autorização por perfil, porque as identidades já são autenticadas e os perfis já existem no token, mas ainda não controlam operações. Permanecem como continuidade curricular Docker, observabilidade, implantação, refresh token, revogação e auditoria.
+O material pode ser utilizado como base da oferta de 2026. As Aulas 00 a 14 atendem de forma consistente ao padrão definido e cada uma preserva um recorte observável, verificável e transferível ao tema do estudante. A próxima aula coerente é testes e cobertura: o sistema já possui uma diversidade de testes suficiente para comparar níveis, custo e evidência. Permanecem como continuidade curricular ciclo de tokens, auditoria, Docker, observabilidade e implantação.
 
 ---
 

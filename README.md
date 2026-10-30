@@ -36,13 +36,15 @@ O sistema será construído incrementalmente. Cada aula termina em um estado exe
 | 11 | Concorrência de estoque, isolamento e locking | [Abrir Aula 11](docs/11aula/11aula.md) |
 | 12 | Autenticação, proteção de senhas e Spring Security | [Abrir Aula 12](docs/12aula/12aula.md) |
 | 13 | JWT, Bearer Token e Resource Server | [Abrir Aula 13](docs/13aula/13aula.md) |
+| 14 | Autorização, perfis e controle de acesso | [Abrir Aula 14](docs/14aula/14aula.md) |
 
 ## Organização pedagógica
 
 As aulas combinam fundamentação conceitual, implementação incremental, evidências de execução, diagnóstico, atividade de transferência e avaliação. O material não deve apresentar código ou configuração como uma sequência isolada de procedimentos.
 
 - [Padrão pedagógico obrigatório das aulas](docs/PADRAO-PEDAGOGICO.md)
-- [Revisão pedagógica e acompanhamento das Aulas 00 a 13](docs/REVISAO-PEDAGOGICA-AULAS-00-13.md)
+- [Revisão pedagógica e acompanhamento das Aulas 00 a 14](docs/REVISAO-PEDAGOGICA-AULAS-00-14.md)
+- [Plano de continuidade das Aulas 14 a 22](docs/PLANO-PROXIMAS-AULAS.md)
 
 ## Projeto de referência
 
@@ -52,7 +54,7 @@ O `suporteos2026` demonstra um controle simplificado de produtos organizados por
 
 ## Executando o projeto
 
-Na primeira execução, copie `.env.example` para `.env`, preencha as senhas dos bancos, gere `JWT_SECRET` conforme a Aula 13 e mantenha esse arquivo fora do Git.
+Na primeira execução, copie `.env.example` para `.env`, preencha as senhas dos bancos, gere `JWT_SECRET` conforme a Aula 13 e mantenha esse arquivo fora do Git. Para um banco vazio, configure também o administrador inicial conforme a Aula 14, execute uma vez com `INITIAL_ADMIN_ENABLED=true` e depois volte a variável para `false`.
 
 No Windows:
 
@@ -112,7 +114,9 @@ A [Aula 12](docs/12aula/12aula.md) adiciona contas vinculadas a pessoas, hash BC
 
 A [Aula 13](docs/13aula/13aula.md) substitui HTTP Basic por JWT. O endpoint `/api/autenticacao/login` valida a conta e emite um token assinado HS256 com duração de 30 minutos. As rotas protegidas passam a exigir `Authorization: Bearer <token>` e são validadas pelo OAuth2 Resource Server do Spring Security. A chave Base64 vem obrigatoriamente de `JWT_SECRET`.
 
-Para testar todo o fluxo em um cliente externo, importe no Postman a coleção [Suporte OS 2026 - API completa](postman/Suporte-OS.postman_collection.json). Ela cria a primeira conta didática, realiza o login, captura o JWT e o envia como Bearer nas chamadas protegidas. Os demais identificadores também são capturados automaticamente, permitindo a execução ordenada pelo Collection Runner.
+A [Aula 14](docs/14aula/14aula.md) converte o claim `perfis` em authorities, diferencia `401` de `403` e aplica autorização para `OPERADOR` e `ADMINISTRADOR`. A criação e a gestão de contas, assim como exclusões, exigem perfil administrativo. Em banco vazio, o primeiro administrador é provisionado por variáveis de ambiente e o mecanismo permanece desativado por padrão.
+
+Para testar todo o fluxo em um cliente externo, importe no Postman a coleção [Suporte OS 2026 - API completa](postman/Suporte-OS.postman_collection.json). Ela autentica o administrador inicial, cria uma conta OPERADOR, demonstra o resultado `403`, captura o JWT operacional e o envia como Bearer nas chamadas protegidas. Os demais identificadores também são capturados automaticamente, permitindo a execução ordenada pelo Collection Runner.
 
 ## Executando os testes
 

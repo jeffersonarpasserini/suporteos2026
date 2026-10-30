@@ -2,13 +2,23 @@
   "info": {
     "_postman_id": "0a09c5d0-9f63-4b31-9eef-202609290009",
     "name": "Suporte OS 2026 - API completa",
-    "description": "Coleção executável das APIs desenvolvidas até a Aula 13. A pasta 02 cria a conta, realiza login e salva o JWT; as demais requisições herdam autenticação Bearer.",
+    "description": "Coleção executável das APIs desenvolvidas até a Aula 14. A pasta 02 autentica o administrador inicial, cria uma conta OPERADOR, comprova o 403 e salva o JWT operacional; as demais requisições herdam autenticação Bearer.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "adminLogin",
+      "value": "administrador",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "defina-a-mesma-senha-do-env",
       "type": "string"
     },
     {
@@ -28,6 +38,11 @@
     },
     {
       "key": "authPessoaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "authContaId",
       "value": "",
       "type": "string"
     },
@@ -204,9 +219,38 @@
       ]
     },
     {
-      "name": "02 - Primeira conta de acesso",
-      "description": "Executa o fluxo inicial público e provisório da Aula 12. Em produção, criação de contas exige um processo administrativo controlado.",
+      "name": "02 - Autorização e conta OPERADOR",
+      "description": "O administrador inicial vem das variáveis de ambiente. Seu JWT cria a conta OPERADOR; depois o token operacional substitui o administrativo.",
       "item": [
+        {
+          "name": "Login do administrador e salvar JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Administrador autenticado com 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{adminLogin}}\",\n  \"senha\": \"{{adminPassword}}\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/autenticacao/login"
+          }
+        },
         {
           "name": "Cadastrar pessoa da conta",
           "event": [
@@ -240,7 +284,6 @@
             }
           ],
           "request": {
-            "auth": {"type": "noauth"},
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {
@@ -264,13 +307,13 @@
                   "    const body = pm.response.json();",
                   "    pm.expect(body).not.to.have.property('senha');",
                   "    pm.expect(body).not.to.have.property('senhaHash');",
-                  "});"
+                  "});",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('authContaId', pm.response.json().id);"
                 ]
               }
             }
           ],
           "request": {
-            "auth": {"type": "noauth"},
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {
@@ -282,7 +325,7 @@
           }
         },
         {
-          "name": "Realizar login e salvar JWT",
+          "name": "Login do OPERADOR e substituir JWT",
           "event": [
             {
               "listen": "test",
@@ -320,6 +363,30 @@
             "url": "{{baseUrl}}/api/contas-acesso/me"
           },
           "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('JWT Bearer autenticou com 200', function () { pm.response.to.have.status(200); });"]}}]
+        },
+        {
+          "name": "OPERADOR não pode criar outra conta",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pessoaId\": {{authPessoaId}},\n  \"login\": \"conta.proibida\",\n  \"senha\": \"{{authPassword}}\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/contas-acesso"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OPERADOR recebe 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     },

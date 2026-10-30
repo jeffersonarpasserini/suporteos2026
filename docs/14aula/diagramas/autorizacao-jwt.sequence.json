@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Autenticação e autorização de uma requisição",
+    "subtitle": "O mesmo token pode produzir 200 ou 403 conforme a operação e os perfis",
+    "output": "docs/14aula/diagramas/autorizacao-jwt.html",
+    "viewBox": [1050, 920],
+    "animation": "none",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {"id": "operacao-permitida", "label": "Operação permitida", "focus": ["cliente", "filtro", "decoder", "converter", "authorization", "controller", "service", "postgres"], "note": "Um OPERADOR autenticado acessa uma operação cotidiana autorizada."},
+      {"id": "operacao-proibida", "label": "Operação proibida", "focus": ["cliente", "filtro", "decoder", "converter", "authorization"], "note": "O token é válido, mas o perfil não satisfaz a política administrativa."}
+    ]
+  },
+  "participants": [
+    {"id": "cliente", "type": "external", "label": "Cliente", "sublabel": "envia Bearer Token"},
+    {"id": "filtro", "type": "security", "label": "Filtros", "sublabel": "SecurityFilterChain"},
+    {"id": "decoder", "type": "security", "label": "JwtDecoder", "sublabel": "assinatura, issuer e exp"},
+    {"id": "converter", "type": "security", "label": "JWT Converter", "sublabel": "perfis para ROLE_*"},
+    {"id": "authorization", "type": "security", "label": "Autorizador", "sublabel": "avalia a política"},
+    {"id": "controller", "type": "backend", "label": "Controller", "sublabel": "fronteira HTTP"},
+    {"id": "service", "type": "backend", "label": "Service", "sublabel": "regra e @PreAuthorize"},
+    {"id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "dados do domínio"}
+  ],
+  "segments": [
+    {"from": 150, "to": 565, "label": "OPERADOR em operação permitida"},
+    {"from": 585, "to": 825, "label": "OPERADOR em operação administrativa"}
+  ],
+  "messages": [
+    {"id": "request-ok", "from": "cliente", "to": "filtro", "y": 185, "label": "GET /api/produtos + Bearer", "variant": "emphasis"},
+    {"id": "decode-ok", "from": "filtro", "to": "decoder", "y": 230, "label": "validar JWT", "variant": "security"},
+    {"id": "claims-ok", "from": "decoder", "to": "converter", "y": 275, "label": "claims válidos", "variant": "return"},
+    {"id": "roles-ok", "from": "converter", "to": "authorization", "y": 320, "label": "ROLE_OPERADOR", "variant": "security"},
+    {"id": "allow", "from": "authorization", "to": "controller", "y": 365, "label": "acesso permitido", "variant": "security"},
+    {"id": "caso-uso", "from": "controller", "to": "service", "y": 410, "label": "executar caso de uso", "variant": "default"},
+    {"id": "query", "from": "service", "to": "postgres", "y": 455, "label": "consultar dados", "variant": "default"},
+    {"id": "rows", "from": "postgres", "to": "service", "y": 495, "label": "resultado", "variant": "return"},
+    {"id": "json", "from": "service", "to": "controller", "y": 535, "label": "DTO", "variant": "return"},
+    {"id": "response-ok", "from": "controller", "to": "cliente", "y": 575, "label": "200 JSON", "variant": "return"},
+    {"id": "request-forbidden", "from": "cliente", "to": "filtro", "y": 625, "label": "POST /api/contas-acesso + Bearer", "variant": "emphasis"},
+    {"id": "decode-forbidden", "from": "filtro", "to": "decoder", "y": 670, "label": "validar JWT", "variant": "security"},
+    {"id": "claims-forbidden", "from": "decoder", "to": "converter", "y": 710, "label": "claims válidos", "variant": "return"},
+    {"id": "roles-forbidden", "from": "converter", "to": "authorization", "y": 750, "label": "ROLE_OPERADOR", "variant": "security"},
+    {"id": "deny", "from": "authorization", "to": "filtro", "y": 790, "label": "ADMINISTRADOR ausente", "variant": "security"},
+    {"id": "response-forbidden", "from": "filtro", "to": "cliente", "y": 830, "label": "403 Forbidden", "variant": "return"}
+  ],
+  "activations": [
+    {"participant": "filtro", "from": 180, "to": 580, "type": "security"},
+    {"participant": "decoder", "from": 225, "to": 280, "type": "security"},
+    {"participant": "converter", "from": 270, "to": 325, "type": "security"},
+    {"participant": "authorization", "from": 315, "to": 370, "type": "security"},
+    {"participant": "controller", "from": 360, "to": 580, "type": "backend"},
+    {"participant": "service", "from": 405, "to": 540, "type": "backend"},
+    {"participant": "postgres", "from": 450, "to": 500, "type": "database"},
+    {"participant": "filtro", "from": 620, "to": 835, "type": "security"},
+    {"participant": "decoder", "from": 665, "to": 715, "type": "security"},
+    {"participant": "converter", "from": 705, "to": 755, "type": "security"},
+    {"participant": "authorization", "from": 745, "to": 795, "type": "security"}
+  ],
+  "cards": [
+    {"dot": "emerald", "title": "200 autorizado", "items": ["Token válido comprova a autenticação", "ROLE_OPERADOR satisfaz a política cotidiana", "Controller e service podem executar"]},
+    {"dot": "rose", "title": "403 proibido", "items": ["O mesmo token continua válido", "Falta ROLE_ADMINISTRADOR", "A requisição é interrompida antes do controller"]},
+    {"dot": "amber", "title": "401 é diferente", "items": ["Sem token ou com token inválido", "A identidade não é estabelecida", "A autorização nem chega a ser avaliada"]}
+  ]
+}
