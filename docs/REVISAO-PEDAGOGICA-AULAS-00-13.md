@@ -1,4 +1,4 @@
-# Revisão pedagógica e acompanhamento — Aulas 00 a 10
+# Revisão pedagógica e acompanhamento — Aulas 00 a 13
 
 [⬅ Voltar para o índice do curso](../README.md)
 
@@ -8,17 +8,17 @@
 
 | Item | Situação |
 |---|---|
-| Escopo | Aulas 00 a 10 |
+| Escopo | Aulas 00 a 13 |
 | Tipo de revisão | Pedagógica, técnica e longitudinal |
-| Última atualização | 29 de setembro de 2026 |
+| Última atualização | 29 de outubro de 2026 |
 | Java adotado | Java 21 |
 | Spring Boot adotado | 4.0.7 |
 | Projeto de referência | `suporteos2026` |
-| Estado técnico verificado | 59 testes aprovados no PostgreSQL 16 |
+| Estado técnico verificado | 67 testes aprovados no PostgreSQL 16 |
 
 ## Escopo da revisão
 
-Esta revisão avalia as onze aulas atualmente existentes no curso:
+Esta revisão avalia as quatorze aulas atualmente existentes no curso:
 
 - Aula 00 — GitHub e início do projeto;
 - Aula 01 — configuração do ambiente;
@@ -30,7 +30,10 @@ Esta revisão avalia as onze aulas atualmente existentes no curso:
 - Aula 07 — API REST, DTOs, mapeadores e testes com Postman;
 - Aula 08 — CRUD completo, estoque, filtros e paginação;
 - Aula 09 — OpenAPI, documentação executável e contrato verificável;
-- Aula 10 — pessoas, papéis, documentos fiscais, fornecedores e vendas.
+- Aula 10 — pessoas, papéis, documentos fiscais, fornecedores e vendas;
+- Aula 11 — concorrência de estoque, isolamento transacional e locking;
+- Aula 12 — autenticação, proteção de senhas e Spring Security;
+- Aula 13 — JWT, Bearer Token e OAuth2 Resource Server.
 
 A análise considera:
 
@@ -51,7 +54,7 @@ O [padrão pedagógico do curso](PADRAO-PEDAGOGICO.md) foi usado como referênci
 
 Foram confrontados:
 
-- os materiais Markdown das Aulas 00 a 10;
+- os materiais Markdown das Aulas 00 a 13;
 - o `README.md` e seu índice;
 - a estrutura Maven;
 - as classes de domínio, repositories, services, DTOs e controllers;
@@ -82,9 +85,19 @@ Skipped: 0
 BUILD SUCCESS
 ```
 
+Após a Aula 11, a suíte passou a verificar duas transações concorrentes sobre o mesmo estoque. A Aula 12 acrescentou conta de acesso, BCrypt e HTTP Basic; a Aula 13 substituiu o envio repetido da senha por um access token JWT. No marco atual, a suíte completa termina com:
+
+```text
+Tests run: 67
+Failures: 0
+Errors: 0
+Skipped: 0
+BUILD SUCCESS
+```
+
 ---
 
-## Síntese das Aulas 00 a 10
+## Síntese das Aulas 00 a 13
 
 | Aula | Contexto e teoria | Prática e verificação | Transferência e avaliação | Situação geral |
 |---:|---|---|---|---|
@@ -93,16 +106,19 @@ BUILD SUCCESS
 | 02 | API, HTTP, Spring Boot e contrato do tema | projeto, health check e Git | projeto temático e rubrica | Atende |
 | 03 | domínio, invariantes, associação e precisão | classes Java e testes unitários | implementação temática e avaliação | Atende |
 | 04 | persistência, ORM, migração e integridade | JPA, PostgreSQL, Liquibase e testes | atividade autônoma e rubrica | Atende |
-| 05 | repositories, transações e dirty checking | services e testes transacionais | transferência e avaliação concisa | Atende |
+| 05 | repositories, transações e dirty checking | services e testes transacionais | transferência e avaliação concisa | Atende com débito editorial |
 | 06 | evolução segura e revisão de automação | diff, migração 003 e convergência | atividades, rubrica e orientação docente | Atende |
 | 07 | REST, DTOs, validação e erros | controllers, MockMvc e Postman | atividade, rubrica, checklist e orientação docente | Atende |
 | 08 | semântica de atualização, exclusão e consulta | PUT, DELETE, estoque, filtros e paginação | atividade, rubrica, checklist e orientação docente | Atende |
 | 09 | contrato explícito e documentação executável | OpenAPI, Swagger UI, schemas e teste do contrato | laboratório, transferência, rubrica e orientação docente | Atende |
 | 10 | composição, N:M com atributos, identidade e atomicidade | CPF/CNPJ, pessoas, papéis, fornecedor, venda, itens e estoque | cenário completo, transferência, rubrica e orientação docente | Atende |
+| 11 | concorrência, isolamento, MVCC, locks e deadlock | locking pessimista e teste com duas transações | experimento, transferência, avaliação e diagnóstico | Atende |
+| 12 | identificação, autenticação, autorização, hash, salt e fator de trabalho | conta de acesso, BCrypt, `UserDetailsService`, HTTP Basic e testes de segurança | laboratório Postman, avaliação e marco verificável | Atende com débito editorial |
+| 13 | JWT, claims, assinatura, Bearer Token, expiração e revogação | login, emissão HS256, Resource Server, OpenAPI, Postman e testes | laboratório completo, discussão de validade e transferência | Atende com débito editorial |
 
 ### Conclusão da síntese
 
-As onze aulas formam uma progressão coerente:
+As quatorze aulas formam uma progressão coerente:
 
 ```text
 Aula 00: preservar e publicar o trabalho
@@ -126,6 +142,12 @@ Aula 08: completar operações e consultas escaláveis
 Aula 09: tornar o contrato explícito, navegável e verificável
     ↓
 Aula 10: evoluir o domínio comercial com composição e transações
+    ↓
+Aula 11: proteger o estoque contra alterações simultâneas
+    ↓
+Aula 12: identificar e autenticar quem chama a API
+    ↓
+Aula 13: representar a autenticação com um token assinado e temporário
 ```
 
 Cada aula parte de um estado executável e acrescenta uma responsabilidade principal. A sequência evita misturar domínio, persistência, transação e HTTP antes que cada fundamento possa ser observado e testado isoladamente.
@@ -700,11 +722,132 @@ A aula atende ao padrão editorial: problema, resultados, pré-requisitos, funda
 
 ---
 
+## Aula 11 — Concorrência de estoque, isolamento transacional e locking
+
+### O que a aula ensina
+
+A aula mostra que uma transação atômica não resolve sozinha disputas entre requisições simultâneas. O estudante parte de uma perda de atualização possível, diferencia atomicidade de isolamento e relaciona MVCC, locking e ordem de aquisição de recursos ao comportamento real do PostgreSQL.
+
+Na prática, o estudante:
+
+- compara bloqueio otimista e pessimista;
+- aplica `PESSIMISTIC_WRITE` antes de alterar saldo;
+- usa `EntityManager` quando precisa tornar o tipo e o momento do lock explícitos;
+- ordena os identificadores antes de bloquear vários produtos;
+- protege finalização de venda, entrada e saída manuais pela mesma regra;
+- executa um teste com duas threads e duas transações independentes;
+- interpreta espera, rollback, timeout e risco de deadlock.
+
+### Entregável e limite de escopo
+
+O marco entrega operações de estoque protegidas contra a condição de corrida estudada e um teste de integração concorrente. Não ensina filas, reserva antecipada, mensageria, processamento distribuído ou repetição automática de transações. Também não altera o esquema, porque o incremento muda a coordenação transacional, não a estrutura das tabelas.
+
+### Evidência e continuidade
+
+O teste concorrente usa PostgreSQL real, pois um banco em memória não seria evidência equivalente para MVCC e locks do SGBD adotado. A aula prepara a API para uso multiusuário e encerra o bloco de consistência antes de iniciar segurança.
+
+---
+
+## Aula 12 — Autenticação, proteção de senhas e Spring Security
+
+### O que a aula ensina
+
+A aula separa três perguntas frequentemente confundidas: quem alguém declara ser, como essa identidade é comprovada e o que ela pode fazer. Também separa a identidade civil (`Pessoa`), os papéis comerciais (`Cliente` e `Colaborador`) e a identidade técnica (`ContaAcesso`).
+
+Na teoria, o estudante aprende:
+
+- identificação, autenticação e autorização;
+- ameaça, vulnerabilidade e controle;
+- por que senha recebe hash, e não criptografia reversível;
+- finalidade de salt e fator de trabalho;
+- dependência do HTTP Basic em relação ao TLS;
+- significado de uma API stateless no contexto do Spring Security.
+
+Na prática, o estudante:
+
+- cria e versiona `ContaAcesso` e perfis com Liquibase;
+- protege senhas com BCrypt;
+- carrega a conta por meio de `UserDetailsService`;
+- configura a cadeia de filtros do Spring Security;
+- protege rotas com HTTP Basic;
+- documenta o esquema no OpenAPI;
+- verifica acessos públicos, autenticados e rejeitados com MockMvc e Postman.
+
+### Entregável e limite de escopo
+
+O marco entrega autenticação persistida e proteção da API, mas usa HTTP Basic de forma deliberadamente didática: a credencial volta a ser apresentada em cada requisição. O bootstrap público de pessoa e conta é provisório. A aula não implementa JWT, recuperação de senha, bloqueio por tentativas, auditoria nem autorização diferente por perfil.
+
+### Evidência e continuidade
+
+Os testes demonstram ausência de hash nas respostas, rejeição de credenciais inválidas e acesso autenticado. Esse fluxo visível fornece o modelo mental necessário para a Aula 13 trocar o mecanismo de apresentação das credenciais sem trocar a origem das contas nem o BCrypt.
+
+---
+
+## Aula 13 — JWT, Bearer Token e OAuth2 Resource Server
+
+### O que a aula ensina
+
+A aula distingue a autenticação inicial da apresentação posterior de uma credencial temporária. O estudante aprende que JWT é um formato de token e que um token assinado garante integridade e autenticidade conforme a chave utilizada, mas não torna o payload secreto.
+
+Na teoria, o estudante aprende:
+
+- header, payload e assinatura de um JWT;
+- Base64URL, assinatura e criptografia como conceitos diferentes;
+- claims `iss`, `sub`, `jti`, `iat`, `exp` e `perfis`;
+- diferenças didáticas entre HS256 e RS256;
+- função de um Resource Server e diferença para um Authorization Server;
+- validade absoluta de access token;
+- por que inatividade exige estado adicional ou refresh token;
+- limites de logout, bloqueio e revogação em JWT stateless.
+
+Na prática, o estudante:
+
+- gera `JWT_SECRET` aleatória, codificada em Base64 e mantida fora do Git;
+- configura propriedades tipadas, `JwtEncoder` e `JwtDecoder`;
+- reutiliza `AuthenticationManager` para validar login e senha;
+- emite um JWT HS256 com duração de 30 minutos;
+- cria `POST /api/autenticacao/login`;
+- substitui HTTP Basic por `Authorization: Bearer <token>`;
+- configura o OAuth2 Resource Server;
+- atualiza OpenAPI e automatiza a captura do token no Postman;
+- testa claims, token malformado, assinatura, expiração e rejeição do Basic.
+
+### Entregável e limite de escopo
+
+O marco entrega login e acesso protegido com Bearer Token. O token vence por tempo absoluto, ainda que seja utilizado durante todo o período. Vencimento por inatividade não é simulado com um simples novo `exp`: ele exigiria refresh token rotativo, sessão persistida ou outro estado no servidor. A aula não implementa refresh token, lista de revogação, logout global, RSA/JWK Set nem autorização por perfil.
+
+### Evidência e continuidade
+
+A suíte de 67 testes demonstra emissão, consumo e rejeição dos principais casos inválidos. A próxima progressão adequada é usar os perfis já carregados no token para estudar autorização, mantendo clara a diferença entre estar autenticado e possuir permissão para uma operação.
+
+---
+
+## O que cada aula acrescenta ao sistema
+
+| Aula | Pergunta respondida | Produto observável | O que fica para depois |
+|---:|---|---|---|
+| 00 | Como preservar e publicar o trabalho? | repositório, primeiro commit e fluxo Git | aplicação Spring |
+| 01 | Como provar que o ambiente está correto? | inventário de JDK, IDE, Wrapper e execução | domínio e API |
+| 02 | Que aplicação será construída e como ela responde HTTP? | projeto, tema e `/api/health` | regras e persistência |
+| 03 | Como representar regras sem depender de infraestrutura? | domínio Java e testes unitários | banco, service e controller |
+| 04 | Como persistir com esquema reproduzível? | JPA, PostgreSQL, profiles, `.env` e Liquibase | casos de uso e endpoints |
+| 05 | Como coordenar acesso a dados e transações? | repositories e services transacionais | evolução do esquema e HTTP |
+| 06 | Como mudar classes e banco com segurança? | migração incremental gerada e revisada | contrato REST |
+| 07 | Como expor casos de uso sem vazar entidades? | DTOs, mapeadores, controllers, erros e Postman | CRUD e consultas completas |
+| 08 | Como completar operações e pesquisar em escala? | PUT, DELETE, estoque, filtros e paginação | documentação formal |
+| 09 | Como tornar o contrato descobrível e verificável? | OpenAPI, Swagger UI e teste do contrato | domínio comercial |
+| 10 | Como representar pessoas, papéis e vendas? | CPF/CNPJ, composição, itens, preço histórico e venda transacional | concorrência e segurança |
+| 11 | Como evitar venda excessiva sob concorrência? | locking pessimista e teste simultâneo | autenticação |
+| 12 | Como comprovar a identidade de quem chama a API? | conta, BCrypt, Spring Security e HTTP Basic | token e autorização fina |
+| 13 | Como evitar o reenvio da senha em cada chamada? | login, JWT temporário e Bearer Token | autorização por perfil e refresh token |
+
+---
+
 ## Cobertura acumulada das previsões
 
 A revisão inicial registrava conteúdos que deveriam aparecer nas aulas futuras. O quadro abaixo mostra onde foram efetivamente desenvolvidos.
 
-| Conteúdo previsto | Fundamentação esperada | Situação em 29/09/2026 |
+| Conteúdo previsto | Fundamentação esperada | Situação em 29/10/2026 |
 |---|---|---|
 | modelo de domínio | entidade, estado, comportamento e invariantes | Atendido na Aula 03 |
 | entidades JPA | identidade, persistência e ORM | Atendido na Aula 04 |
@@ -722,8 +865,11 @@ A revisão inicial registrava conteúdos que deveriam aparecer nas aulas futuras
 | atualização com `PUT` | idempotência e campos controlados | Atendido na Aula 08 |
 | exclusão | integridade e conflito de recurso em uso | Atendido na Aula 08 |
 | paginação e filtros | consulta no banco, limites e ordenação | Atendido na Aula 08 |
-| segurança | segredos, validação e menor privilégio | Parcialmente atendido de forma transversal |
-| autenticação e autorização | identidade do usuário e controle de acesso | Ainda não abordado |
+| concorrência | isolamento, MVCC, locking e deadlock | Atendido na Aula 11 |
+| segurança | segredos, validação, credenciais e controles | Atendido transversalmente; aprofundado nas Aulas 12 e 13 |
+| autenticação | identidade, senha e mecanismo de autenticação | Atendido nas Aulas 12 e 13 |
+| autorização | perfis e controle de acesso por operação | Preparado nas Aulas 12 e 13; aplicação das regras fica para a Aula 14 |
+| JWT | claims, assinatura, expiração, Bearer e revogação | Atendido na Aula 13 |
 | OpenAPI | contrato executável e documentação da API | Atendido na Aula 09 |
 | domínio comercial | clientes, colaboradores, vendas e itens | Atendido na Aula 10 |
 | documentos fiscais | formato, dígitos verificadores e limites | Atendido na Aula 10 |
@@ -747,7 +893,7 @@ As limitações registradas na Aula 02 foram retomadas da seguinte forma:
 
 ---
 
-## Coerência da progressão até a Aula 10
+## Coerência da progressão até a Aula 13
 
 | Aula | Incremento principal | Dependência conceitual anterior |
 |---:|---|---|
@@ -762,8 +908,31 @@ As limitações registradas na Aula 02 foram retomadas da seguinte forma:
 | 08 | atualização, exclusão, estoque e consultas paginadas | contrato REST básico |
 | 09 | OpenAPI, Swagger UI e teste do contrato | API com operações e representações estáveis |
 | 10 | pessoas, papéis, documentos fiscais, vendas e itens | contrato explícito e domínio transacional existente |
+| 11 | isolamento e locking de estoque | transações e fluxo de venda |
+| 12 | conta, BCrypt e autenticação HTTP Basic | identidade civil separada dos papéis comerciais |
+| 13 | JWT e OAuth2 Resource Server | autenticação com banco e cadeia de filtros compreendida |
 
 A progressão preserva uma decisão pedagógica consistente: cada aula introduz uma camada ou problema novo sobre um estado executável já compreendido.
+
+---
+
+## Distribuição de carga e pontos de atenção
+
+A sequência conceitual está correta, mas a quantidade de conteúdo por aula não é uniforme. Isso não exige renumerar imediatamente o curso; exige que o plano docente distribua encontros e checkpoints de acordo com a carga real.
+
+| Ponto de atenção | Evidência | Recomendação |
+|---|---|---|
+| preparação do PostgreSQL | a Aula 04 pressupõe Docker e PostgreSQL, enquanto a Aula 01 concentra a validação em Java, IDE e Maven | criar uma seção preparatória reproduzível antes do primeiro checkpoint da Aula 04 |
+| Aula 01 muito extensa | mistura a trilha obrigatória de 2026 com material histórico de JSP, Tomcat, Payara e NetBeans | mover a trilha histórica para apêndice e preservar no corpo apenas a comparação conceitual necessária |
+| Aula 02 com dois resultados grandes | reúne fundamentos completos de API/HTTP e criação do projeto temático | planejar dois encontros ou dois blocos: fundamentos e geração/execução do projeto |
+| retomada entre Aulas 02 e 07 | API, HTTP, recurso e idempotência reaparecem | tratar a repetição como revisão diagnóstica e concentrar a Aula 07 em DTOs, controllers, erros e testes |
+| Aulas 08 e 10 densas | combinam muitos conceitos e um incremento funcional amplo | dividir cada material em dois ou mais encontros sem criar tags para todo checkpoint |
+| padrão incompleto nas Aulas 05, 12 e 13 | a implementação e a teoria estão corretas, mas faltam algumas seções formais previstas no padrão | acrescentar mapeamento teoria–prática, atividades orientada/autônoma, orientação docente e referências onde ausentes |
+| tag intermediária na Aula 07 | `aula-07.1-dtos` compete com o padrão `aula-NN-descricao` | transformar o ponto intermediário em commit/checkpoint ou formalizar uma convenção de subtags |
+| contagem de testes entre Aulas 05 e 08 | há testes, mas nem todo marco registra uma contagem final inequívoca | incluir a evidência esperada no checklist de cada marco |
+| versão do PostgreSQL | apenas materiais mais recentes explicitam PostgreSQL 16 | centralizar a versão oficial no README e referenciá-la nas aulas |
+
+OpenAPI, Postman e Liquibase reaparecem em várias aulas de maneira intencional: são artefatos vivos. A repetição só é produtiva quando código, contrato, coleção e histórico de banco são atualizados no mesmo marco.
 
 ---
 
@@ -771,8 +940,8 @@ A progressão preserva uma decisão pedagógica consistente: cada aula introduz 
 
 ### Prioridade alta
 
-1. **Segurança concorrente do estoque:** abordar perda de atualização e locking antes de uso multiusuário real.
-2. **Segurança futura sem acoplamento:** introduzir conta, credenciais e perfis sobre a identidade já modelada, sem confundir função profissional com autorização.
+1. **Autorização por perfil:** aplicar regras diferentes a operador e administrador e testar a diferença entre `401 Unauthorized` e `403 Forbidden`.
+2. **Bootstrap seguro:** substituir o cadastro público provisório por um processo administrativo ou de inicialização controlada.
 
 ### Prioridade média
 
@@ -780,14 +949,15 @@ A progressão preserva uma decisão pedagógica consistente: cada aula introduz 
 2. **Acessibilidade de diagramas:** manter explicações textuais próximas aos Mermaid.
 3. **Atualização visual da Aula 01:** substituir capturas históricas na trilha principal.
 4. **Manutenção do contrato:** incorporar a revisão do OpenAPI ao checklist de toda nova operação.
+5. **Padronização editorial:** completar nas Aulas 05, 12 e 13 as seções formais exigidas pelo padrão pedagógico.
 
 ### Prioridade futura
 
 1. Docker como conteúdo, não apenas pré-requisito operacional.
 2. Observabilidade, logs estruturados e correlação de requisições.
 3. Empacotamento, implantação e configuração por ambiente.
-4. Concorrência em movimentações de estoque e controle de versão otimista.
-5. Estratégia de autenticação, autorização e auditoria, mantida fora do escopo imediato do curso.
+4. Refresh token, revogação e logout quando a trilha precisar estudar sessões renováveis.
+5. Auditoria de autenticação e das operações sensíveis.
 
 ---
 
@@ -811,9 +981,9 @@ A progressão preserva uma decisão pedagógica consistente: cada aula introduz 
 
 As Aulas 00 a 02 atendem ao papel de fundação do curso. Elas não se limitam a procedimentos: apresentam modelos mentais, exigem evidências, incluem diagnóstico e preparam a transferência para um domínio escolhido pelo estudante.
 
-As Aulas 03 a 10 concretizam a progressão anunciada: domínio, persistência, transações, evolução de esquema, API REST, operações completas, consultas paginadas, documentação executável e evolução comercial por composição. A implementação acompanha a documentação e possui testes de domínio, aplicação, persistência, HTTP e contrato OpenAPI.
+As Aulas 03 a 09 concretizam a progressão técnica fundamental: domínio, persistência, transações, evolução de esquema, API REST, operações completas, consultas paginadas e documentação executável. As Aulas 10 e 11 ampliam o domínio comercial e demonstram que atomicidade e concorrência são problemas relacionados, mas diferentes. As Aulas 12 e 13 constroem autenticação em dois passos didáticos: primeiro credenciais e cadeia de filtros com HTTP Basic; depois emissão, assinatura, expiração e consumo de JWT.
 
-O material pode ser utilizado como base da oferta de 2026. As Aulas 00 a 10 atendem de forma consistente ao padrão definido, preservadas as melhorias futuras registradas neste documento. Os próximos passos coerentes são segurança concorrente do estoque, contas e autorização em momento apropriado, Docker como objeto de estudo, observabilidade e implantação. Autenticação e autorização permanecem deliberadamente fora do escopo da Aula 10.
+O material pode ser utilizado como base da oferta de 2026. As Aulas 00 a 13 atendem de forma consistente ao padrão definido e cada uma preserva um recorte observável, verificável e transferível ao tema do estudante. A próxima aula coerente é autorização por perfil, porque as identidades já são autenticadas e os perfis já existem no token, mas ainda não controlam operações. Permanecem como continuidade curricular Docker, observabilidade, implantação, refresh token, revogação e auditoria.
 
 ---
 

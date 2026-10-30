@@ -17,10 +17,11 @@ public class OpenApiConfig {
     OpenAPI suporteOsOpenAPI() {
         return new OpenAPI()
                 .components(new Components()
-                        .addSecuritySchemes("basicAuth", new SecurityScheme()
+                        .addSecuritySchemes("bearerAuth", new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
-                                .scheme("basic")))
-                .addSecurityItem(new SecurityRequirement().addList("basicAuth"))
+                                .scheme("bearer")
+                                .bearerFormat("JWT")))
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .info(new Info()
                         .title("Suporte OS API")
                         .description("API didática para produtos, fornecedores, pessoas, clientes, "

@@ -1,5 +1,6 @@
 package com.curso.suporteos.api;
 
+import com.jayway.jsonpath.JsonPath;
 import com.curso.suporteos.domain.ContaAcesso;
 import com.curso.suporteos.domain.Pessoa;
 import com.curso.suporteos.repository.ContaAcessoRepository;
@@ -9,15 +10,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.Instant;
+import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -44,6 +54,12 @@ class ContaAcessoSecurityTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtDecoder jwtDecoder;
+
+    @Autowired
+    private JwtEncoder jwtEncoder;
 
     @Test
     void devePermitirHealthSemAutenticacao() throws Exception {
@@ -84,18 +100,35 @@ class ContaAcessoSecurityTest {
     }
 
     @Test
-    void deveAutenticarComHttpBasicEConsultarAPropriaConta() throws Exception {
+    void deveEmitirJwtEConsultarAPropriaContaComBearerToken() throws Exception {
         salvarConta("operadora.2026", SENHA);
 
         mockMvc.perform(get("/api/contas-acesso/me")
                         .with(httpBasic("operadora.2026", SENHA)))
+                .andExpect(status().isUnauthorized());
+
+        String token = autenticar("operadora.2026", SENHA);
+        Jwt jwt = jwtDecoder.decode(token);
+
+        assertEquals("https://suporteos2026.local", jwt.getIssuer().toString());
+        assertEquals("operadora.2026", jwt.getSubject());
+        assertTrue(jwt.getId() != null && !jwt.getId().isBlank());
+        assertTrue(jwt.getClaimAsStringList("perfis").contains("OPERADOR"));
+        assertTrue(jwt.getExpiresAt().isAfter(jwt.getIssuedAt()));
+
+        mockMvc.perform(get("/api/contas-acesso/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.login").value("operadora.2026"))
                 .andExpect(jsonPath("$.nomePessoa", containsString("Pessoa")));
 
-        mockMvc.perform(get("/api/contas-acesso/me")
-                        .with(httpBasic("operadora.2026", "senha-incorreta")))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/autenticacao/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"login":"operadora.2026","senha":"senha-incorreta"}
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Login ou senha inválidos"));
     }
 
     @Test
@@ -104,9 +137,55 @@ class ContaAcessoSecurityTest {
         conta.bloquear();
         contaRepository.saveAndFlush(conta);
 
-        mockMvc.perform(get("/api/contas-acesso/me")
-                        .with(httpBasic("conta.bloqueada", SENHA)))
+        mockMvc.perform(post("/api/autenticacao/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"login":"conta.bloqueada","senha":"%s"}
+                                """.formatted(SENHA)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Login ou senha inválidos"));
+    }
+
+    @Test
+    void deveRejeitarBearerTokenInvalido() throws Exception {
+        mockMvc.perform(get("/api/produtos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token.invalido.aqui"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void deveRejeitarJwtExpiradoMesmoComAssinaturaValida() throws Exception {
+        Instant agora = Instant.now();
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer("https://suporteos2026.local")
+                .subject("operadora.expirada")
+                .issuedAt(agora.minusSeconds(3600))
+                .expiresAt(agora.minusSeconds(60))
+                .claim("perfis", List.of("OPERADOR"))
+                .build();
+        String tokenExpirado = jwtEncoder
+                .encode(JwtEncoderParameters.from(claims))
+                .getTokenValue();
+
+        mockMvc.perform(get("/api/produtos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenExpirado))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private String autenticar(String login, String senha) throws Exception {
+        String resposta = mockMvc.perform(post("/api/autenticacao/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"login":"%s","senha":"%s"}
+                                """.formatted(login, senha)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.expiresIn").value(1800))
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return JsonPath.read(resposta, "$.accessToken");
     }
 
     private ContaAcesso salvarConta(String login, String senha) {

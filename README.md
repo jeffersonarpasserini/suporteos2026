@@ -35,13 +35,14 @@ O sistema será construído incrementalmente. Cada aula termina em um estado exe
 | 10 | Pessoas, clientes, colaboradores, fornecedores e vendas | [Abrir Aula 10](docs/10aula/10aula.md) |
 | 11 | Concorrência de estoque, isolamento e locking | [Abrir Aula 11](docs/11aula/11aula.md) |
 | 12 | Autenticação, proteção de senhas e Spring Security | [Abrir Aula 12](docs/12aula/12aula.md) |
+| 13 | JWT, Bearer Token e Resource Server | [Abrir Aula 13](docs/13aula/13aula.md) |
 
 ## Organização pedagógica
 
 As aulas combinam fundamentação conceitual, implementação incremental, evidências de execução, diagnóstico, atividade de transferência e avaliação. O material não deve apresentar código ou configuração como uma sequência isolada de procedimentos.
 
 - [Padrão pedagógico obrigatório das aulas](docs/PADRAO-PEDAGOGICO.md)
-- [Revisão pedagógica e acompanhamento das Aulas 00 a 10](docs/REVISAO-PEDAGOGICA-AULAS-00-10.md)
+- [Revisão pedagógica e acompanhamento das Aulas 00 a 13](docs/REVISAO-PEDAGOGICA-AULAS-00-13.md)
 
 ## Projeto de referência
 
@@ -51,7 +52,7 @@ O `suporteos2026` demonstra um controle simplificado de produtos organizados por
 
 ## Executando o projeto
 
-Na primeira execução, copie `.env.example` para `.env`, preencha `DB_DEV_PASSWORD` e `DB_TEST_PASSWORD` e mantenha esse arquivo fora do Git.
+Na primeira execução, copie `.env.example` para `.env`, preencha as senhas dos bancos, gere `JWT_SECRET` conforme a Aula 13 e mantenha esse arquivo fora do Git.
 
 No Windows:
 
@@ -96,7 +97,7 @@ Após iniciar a aplicação, estão disponíveis os cadastros, consultas por ID 
 - `http://localhost:8080/api/pessoas`;
 - `http://localhost:8080/api/clientes`;
 - `http://localhost:8080/api/colaboradores`;
-- `http://localhost:8080/api/vendas`.
+- `http://localhost:8080/api/vendas`;
 - `http://localhost:8080/api/contas-acesso`.
 
 Os contratos usam DTOs, validação de entrada e respostas de erro padronizadas. A [Aula 07](docs/07aula/07aula.md) contém um laboratório completo de testes com Postman. A [Aula 08](docs/08aula/08aula.md) acrescenta alteração, exclusão, status, movimentações de estoque, filtros, ordenação e paginação para grupos e produtos.
@@ -109,7 +110,9 @@ A [Aula 11](docs/11aula/11aula.md) trata alterações simultâneas do estoque. O
 
 A [Aula 12](docs/12aula/12aula.md) adiciona contas vinculadas a pessoas, hash BCrypt e autenticação HTTP Basic stateless. Health, documentação e o fluxo inicial de criação de pessoa e conta permanecem públicos para fins didáticos; as demais rotas exigem credencial. Esse bootstrap público está explicitamente documentado como provisório e não representa uma configuração pronta para produção.
 
-Para testar todo o fluxo em um cliente externo, importe no Postman a coleção [Suporte OS 2026 - API completa](postman/Suporte-OS.postman_collection.json). Ela cria a primeira conta didática, usa autenticação Basic nas chamadas protegidas, captura automaticamente os identificadores e pode ser executada na ordem das pastas pelo Collection Runner.
+A [Aula 13](docs/13aula/13aula.md) substitui HTTP Basic por JWT. O endpoint `/api/autenticacao/login` valida a conta e emite um token assinado HS256 com duração de 30 minutos. As rotas protegidas passam a exigir `Authorization: Bearer <token>` e são validadas pelo OAuth2 Resource Server do Spring Security. A chave Base64 vem obrigatoriamente de `JWT_SECRET`.
+
+Para testar todo o fluxo em um cliente externo, importe no Postman a coleção [Suporte OS 2026 - API completa](postman/Suporte-OS.postman_collection.json). Ela cria a primeira conta didática, realiza o login, captura o JWT e o envia como Bearer nas chamadas protegidas. Os demais identificadores também são capturados automaticamente, permitindo a execução ordenada pelo Collection Runner.
 
 ## Executando os testes
 

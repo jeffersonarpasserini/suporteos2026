@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "0a09c5d0-9f63-4b31-9eef-202609290009",
     "name": "Suporte OS 2026 - API completa",
-    "description": "Coleção executável das APIs desenvolvidas até a Aula 12. Execute as pastas na ordem apresentada. A pasta 02 cria a primeira conta didática; as demais requisições herdam autenticação HTTP Basic.",
+    "description": "Coleção executável das APIs desenvolvidas até a Aula 13. A pasta 02 cria a conta, realiza login e salva o JWT; as demais requisições herdam autenticação Bearer.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -19,6 +19,11 @@
     {
       "key": "authPassword",
       "value": "senha-didatica-postman-2026",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
       "type": "string"
     },
     {
@@ -93,10 +98,9 @@
     }
   ],
   "auth": {
-    "type": "basic",
-    "basic": [
-      {"key": "username", "value": "{{authLogin}}", "type": "string"},
-      {"key": "password", "value": "{{authPassword}}", "type": "string"}
+    "type": "bearer",
+    "bearer": [
+      {"key": "token", "value": "{{accessToken}}", "type": "string"}
     ]
   },
   "event": [
@@ -278,13 +282,44 @@
           }
         },
         {
+          "name": "Realizar login e salvar JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login realizado com 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Token Bearer recebido', function () {",
+                  "    pm.expect(body.tokenType).to.eql('Bearer');",
+                  "    pm.expect(body.accessToken.split('.')).to.have.lengthOf(3);",
+                  "});",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('accessToken', body.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{authLogin}}\",\n  \"senha\": \"{{authPassword}}\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{baseUrl}}/api/autenticacao/login"
+          }
+        },
+        {
           "name": "Consultar minha conta autenticada",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/api/contas-acesso/me"
           },
-          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('HTTP Basic autenticou com 200', function () { pm.response.to.have.status(200); });"]}}]
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('JWT Bearer autenticou com 200', function () { pm.response.to.have.status(200); });"]}}]
         }
       ]
     },

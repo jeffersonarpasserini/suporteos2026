@@ -1,6 +1,7 @@
 package com.curso.suporteos.api.exception;
 
 import com.curso.suporteos.application.RecursoDuplicadoException;
+import com.curso.suporteos.application.CredenciaisInvalidasException;
 import com.curso.suporteos.application.RecursoEmUsoException;
 import com.curso.suporteos.application.RecursoNaoEncontradoException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +19,17 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(CredenciaisInvalidasException.class)
+    public ResponseEntity<ApiError> tratarCredenciaisInvalidas(
+            CredenciaisInvalidasException exception,
+            HttpServletRequest request) {
+        return resposta(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage(),
+                request,
+                Map.of());
+    }
 
     @ExceptionHandler(RecursoNaoEncontradoException.class)
     public ResponseEntity<ApiError> tratarNaoEncontrado(
